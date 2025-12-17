@@ -4,10 +4,8 @@ import styles from './Heade.module.scss'
 function Header() {
     return (
         <header>
-            <div className="{styles.logo}">
-                <img src="/logo.svg" alt="Logo" />
-            </div>
-                <nav className={styles.nav}>
+                <img className={styles.logo} src="./img/test_logo.svg" alt="Logo" />
+                <nav className={styles.navbar}>
                     <ul>
                     <li><a href="#">Overview</a></li>
                     <li><a href="#">Features</a></li>
