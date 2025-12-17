@@ -1,0 +1,42 @@
+/* Основной контейнер Header */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 40px;
+  background: linear-gradient(90deg, #6a11cb 0%, #2575fc 100%); /* Градиентный фон */
+  font-family: 'Inter', sans-serif; /* Используем подключенный шрифт */
+}
+
+.logo img {
+  height: 40px; /* Размер логотипа */
+}
+
+.nav ul {
+  list-style: none;
+  display: flex;
+  gap: 30px;
+}
+
+.nav li a {
+  color: white;
+  text-decoration: none;
+  font-weight: 500;
+}
+
+.nav li a:hover {
+  text-decoration: underline;
+}
+
+.signIn button {
+  background-color: black;
+  color: white;
+  border: none;
+  padding: 10px 20px;
+  border-radius: 5px;
+  cursor: pointer;
+}
+
+.signIn button:hover {
+  background-color: #333;
+}
