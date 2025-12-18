@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styles from './RegistrationForm.module.scss';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Типы для формы
 interface FormData {
@@ -31,6 +32,9 @@ interface FormErrors {
 }
 
 const RegistrationForm: React.FC = () => {
+  // Хук аутентификации
+  const { register, isLoading: authLoading } = useAuth();
+
   // Состояние формы
   const [formData, setFormData] = useState<FormData>({
     license_id: '',
@@ -51,6 +55,9 @@ const RegistrationForm: React.FC = () => {
   // Состояние отправки
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Комбинированное состояние загрузки
+  const isActuallySubmitting = isSubmitting || authLoading;
 
   // Обработчик изменения полей
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -139,7 +146,7 @@ const RegistrationForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Обработчик отправки формы
+  // Обработчик отправки формы с реальным API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -150,25 +157,68 @@ const RegistrationForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Здесь будет реальный API запрос
-      console.log('Отправка данных:', formData);
+      // Отправляем данные через AuthContext
+      const response = await register(formData);
       
-      // Имитация задержки API
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (response.success) {
+        // Успешная регистрация
+        setIsSuccess(true);
+        console.log('Регистрация успешна!', response.data);
+        
+        // Перенаправление на dashboard через 2 секунды
+        setTimeout(() => {
+          // В будущем заменим на React Router
+          window.location.href = '/dashboard';
+        }, 2000);
+        
+      } else {
+        // Обработка ошибок от сервера
+        if (response.errors) {
+          // Преобразуем ошибки сервера в наш формат
+          const serverErrors: FormErrors = {};
+          
+          Object.entries(response.errors).forEach(([field, messages]) => {
+            if (messages && messages.length > 0) {
+              serverErrors[field as keyof FormErrors] = messages[0];
+            }
+          });
+          
+          setErrors(serverErrors);
+        } else if (response.message) {
+          setErrors({
+            ...errors,
+            submit: response.message
+          });
+        }
+      }
       
-      // Успешная регистрация
-      setIsSuccess(true);
-      console.log('Регистрация успешна!');
-      
-      // Можно перенаправить пользователя или показать сообщение
-      // Например: window.location.href = '/dashboard';
-      
-    } catch (error) {
+    } catch (error: any) {
       console.error('Ошибка регистрации:', error);
-      setErrors({
-        ...errors,
-        submit: 'Ошибка регистрации. Попробуйте еще раз.'
-      });
+      
+      let errorMessage = 'Ошибка регистрации. Попробуйте еще раз.';
+      
+      // Обработка разных типов ошибок
+      if (error.message) {
+        errorMessage = error.message;
+      }
+      
+      if (error.errors) {
+        // Ошибки валидации от сервера
+        const serverErrors: FormErrors = {};
+        
+        Object.entries(error.errors).forEach(([field, messages]) => {
+          if (Array.isArray(messages) && messages.length > 0) {
+            serverErrors[field as keyof FormErrors] = messages[0];
+          }
+        });
+        
+        setErrors(serverErrors);
+      } else {
+        setErrors({
+          ...errors,
+          submit: errorMessage
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -380,9 +430,9 @@ const RegistrationForm: React.FC = () => {
           <button
             type="submit"
             className={styles.submitButton}
-            disabled={isSubmitting}
+            disabled={isActuallySubmitting}
           >
-            {isSubmitting ? 'Регистрация...' : 'Зарегистрироваться'}
+            {isActuallySubmitting ? 'Регистрация...' : 'Зарегистрироваться'}
           </button>
 
           <p className={styles.loginLink}>

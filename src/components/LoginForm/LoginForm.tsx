@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styles from './LoginForm.module.scss';
+import { useAuth } from '../../contexts/AuthContext';
 
 // Типы для формы
 interface LoginFormData {
@@ -16,6 +17,9 @@ interface LoginFormErrors {
 }
 
 const LoginForm: React.FC = () => {
+  // Хук аутентификации
+  const { login, isLoading: authLoading } = useAuth();
+
   // Состояние формы
   const [formData, setFormData] = useState<LoginFormData>({
     email: '',
@@ -30,6 +34,9 @@ const LoginForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+
+  // Комбинированное состояние загрузки
+  const isActuallySubmitting = isSubmitting || authLoading;
 
   // Обработчик изменения полей
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,7 +78,7 @@ const LoginForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Обработчик отправки формы
+  // Обработчик отправки формы с реальным API
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -82,39 +89,65 @@ const LoginForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Здесь будет реальный API запрос
-      console.log('Отправка данных для входа:', {
-        email: formData.email,
-        rememberMe: formData.rememberMe
-      });
+      // Используем login из AuthContext (не register!)
+      const response = await login(formData.email, formData.password);
       
-      // Имитация задержки API
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      
-      // Успешный вход
-      setIsSuccess(true);
-      console.log('Вход выполнен успешно!');
-      
-      // Здесь обычно: сохранение токена, редирект на dashboard
-      // localStorage.setItem('token', 'your-auth-token');
-      // window.location.href = '/dashboard';
+      if (response.success) {
+        // Успешный вход
+        setIsSuccess(true);
+        console.log('Вход выполнен успешно!', response.data);
+        
+        // Перенаправление на dashboard
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+        
+      } else {
+        // Обработка ошибок
+        if (response.errors) {
+          const serverErrors: LoginFormErrors = {};
+          
+          Object.entries(response.errors).forEach(([field, messages]) => {
+            if (messages && messages.length > 0) {
+              // Используем правильный тип для field
+              serverErrors[field as keyof LoginFormErrors] = messages[0];
+            }
+          });
+          
+          setErrors(serverErrors);
+        } else if (response.message) {
+          setErrors({
+            ...errors,
+            submit: response.message
+          });
+        }
+      }
       
     } catch (error: any) {
       console.error('Ошибка входа:', error);
       
       let errorMessage = 'Ошибка входа. Проверьте email и пароль.';
       
-      // Имитация разных ошибок сервера
-      if (formData.email.includes('locked')) {
-        errorMessage = 'Аккаунт заблокирован. Обратитесь в поддержку.';
-      } else if (formData.email.includes('notfound')) {
-        errorMessage = 'Пользователь с таким email не найден.';
+      if (error.message) {
+        errorMessage = error.message;
       }
       
-      setErrors({
-        ...errors,
-        submit: errorMessage
-      });
+      if (error.errors) {
+        const serverErrors: LoginFormErrors = {};
+        
+        Object.entries(error.errors).forEach(([field, messages]) => {
+          if (Array.isArray(messages) && messages.length > 0) {
+            serverErrors[field as keyof LoginFormErrors] = messages[0];
+          }
+        });
+        
+        setErrors(serverErrors);
+      } else {
+        setErrors({
+          ...errors,
+          submit: errorMessage
+        });
+      }
     } finally {
       setIsSubmitting(false);
     }
@@ -249,9 +282,9 @@ const LoginForm: React.FC = () => {
           <button
             type="submit"
             className={styles.submitButton}
-            disabled={isSubmitting}
+            disabled={isActuallySubmitting}
           >
-            {isSubmitting ? 'Вход...' : 'Войти'}
+            {isActuallySubmitting ? 'Вход...' : 'Войти'}
           </button>
         </div>
       </form>
