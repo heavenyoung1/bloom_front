@@ -1,0 +1,283 @@
+import React, { useState } from 'react';
+import styles from './LoginForm.module.scss';
+
+// Типы для формы
+interface LoginFormData {
+  email: string;
+  password: string;
+  rememberMe: boolean;
+}
+
+// Типы для ошибок
+interface LoginFormErrors {
+  email?: string;
+  password?: string;
+  submit?: string;
+}
+
+const LoginForm: React.FC = () => {
+  // Состояние формы
+  const [formData, setFormData] = useState<LoginFormData>({
+    email: '',
+    password: '',
+    rememberMe: false,
+  });
+
+  // Состояние ошибок
+  const [errors, setErrors] = useState<LoginFormErrors>({});
+  
+  // Состояния UI
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [isSuccess, setIsSuccess] = useState(false);
+
+  // Обработчик изменения полей
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value, type, checked } = e.target;
+    
+    setFormData(prev => ({
+      ...prev,
+      [name]: type === 'checkbox' ? checked : value
+    }));
+    
+    // Очищаем ошибку при изменении поля
+    if (errors[name as keyof LoginFormErrors]) {
+      setErrors(prev => ({
+        ...prev,
+        [name]: undefined
+      }));
+    }
+  };
+
+  // Валидация формы
+  const validateForm = (): boolean => {
+    const newErrors: LoginFormErrors = {};
+    
+    // Email
+    if (!formData.email.trim()) {
+      newErrors.email = 'Email обязателен';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
+      newErrors.email = 'Введите корректный email';
+    }
+    
+    // Пароль
+    if (!formData.password) {
+      newErrors.password = 'Пароль обязателен';
+    } else if (formData.password.length < 6) {
+      newErrors.password = 'Минимум 6 символов';
+    }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
+
+  // Обработчик отправки формы
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    
+    if (!validateForm()) {
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
+    try {
+      // Здесь будет реальный API запрос
+      console.log('Отправка данных для входа:', {
+        email: formData.email,
+        rememberMe: formData.rememberMe
+      });
+      
+      // Имитация задержки API
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      // Успешный вход
+      setIsSuccess(true);
+      console.log('Вход выполнен успешно!');
+      
+      // Здесь обычно: сохранение токена, редирект на dashboard
+      // localStorage.setItem('token', 'your-auth-token');
+      // window.location.href = '/dashboard';
+      
+    } catch (error: any) {
+      console.error('Ошибка входа:', error);
+      
+      let errorMessage = 'Ошибка входа. Проверьте email и пароль.';
+      
+      // Имитация разных ошибок сервера
+      if (formData.email.includes('locked')) {
+        errorMessage = 'Аккаунт заблокирован. Обратитесь в поддержку.';
+      } else if (formData.email.includes('notfound')) {
+        errorMessage = 'Пользователь с таким email не найден.';
+      }
+      
+      setErrors({
+        ...errors,
+        submit: errorMessage
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  // Обработчик "Забыли пароль?"
+  const handleForgotPassword = (e: React.MouseEvent) => {
+    e.preventDefault();
+    console.log('Переход к восстановлению пароля для:', formData.email);
+    
+    // Здесь обычно: открытие модалки или переход на страницу восстановления
+    alert(`Инструкция по восстановлению пароля отправлена на ${formData.email || 'ваш email'}`);
+  };
+
+  // Обработчик "Восстановить аккаунт"
+  const handleRestoreAccount = () => {
+    console.log('Восстановление аккаунта');
+    
+    // Здесь обычно: переход на страницу восстановления/реактивации
+    // window.location.href = '/restore-account';
+    
+    alert('Функция восстановления аккаунта. Свяжитесь с поддержкой: support@legalcrm.com');
+  };
+
+  // Если успешно
+  if (isSuccess) {
+    return (
+      <div className={styles.login}>
+        <div className={styles.header}>
+          <h2 className={styles.title}>Добро пожаловать!</h2>
+          <p className={styles.subtitle}>Вход выполнен успешно</p>
+        </div>
+        
+        <div className={styles.successMessage}>
+          <p>✅ Вы успешно вошли в систему.</p>
+          <p>Перенаправляем в личный кабинет...</p>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className={styles.login}>
+      <div className={styles.header}>
+        <h2 className={styles.title}>Вход в CRM</h2>
+        <p className={styles.subtitle}>
+          Введите ваши учетные данные для доступа к системе
+        </p>
+      </div>
+      
+      <form className={styles.form} onSubmit={handleSubmit}>
+        {/* Email */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            Электронная почта <span className={styles.required}>*</span>
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            placeholder="ivan@example.com"
+            className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
+            autoComplete="username"
+          />
+          {errors.email && <span className={styles.error}>{errors.email}</span>}
+        </div>
+        
+        {/* Пароль */}
+        <div className={styles.formGroup}>
+          <div className={styles.label}>
+            Пароль <span className={styles.required}>*</span>
+          </div>
+          
+          <div className={styles.inputWrapper}>
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              value={formData.password}
+              onChange={handleInputChange}
+              placeholder="Введите пароль"
+              className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
+              autoComplete="current-password"
+            />
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword(!showPassword)}
+              title={showPassword ? "Скрыть пароль" : "Показать пароль"}
+            >
+              {showPassword ? "👁️" : "👁️‍🗨️"}
+            </button>
+          </div>
+          
+          {errors.password && <span className={styles.error}>{errors.password}</span>}
+          
+          <div className={styles.forgotPassword}>
+            <a 
+              href="/forgot-password" 
+              className={styles.forgotPasswordLink}
+              onClick={handleForgotPassword}
+            >
+              Забыли пароль?
+            </a>
+          </div>
+        </div>
+        
+        {/* Запомнить меня */}
+        <div className={styles.rememberMe}>
+          <input
+            type="checkbox"
+            id="rememberMe"
+            name="rememberMe"
+            checked={formData.rememberMe}
+            onChange={handleInputChange}
+            className={styles.checkbox}
+          />
+          <label htmlFor="rememberMe" className={styles.checkboxLabel}>
+            Запомнить меня
+          </label>
+        </div>
+        
+        {/* Серверная ошибка */}
+        {errors.submit && (
+          <div className={styles.serverError}>
+            ❌ {errors.submit}
+          </div>
+        )}
+        
+        {/* Кнопка входа */}
+        <div className={styles.buttons}>
+          <button
+            type="submit"
+            className={styles.submitButton}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Вход...' : 'Войти'}
+          </button>
+        </div>
+      </form>
+      
+      {/* Разделитель */}
+      <div className={styles.divider}>
+        <span>или</span>
+      </div>
+      
+      {/* Кнопка восстановления аккаунта */}
+      <div className={styles.buttons}>
+        <button
+          type="button"
+          className={styles.restoreAccountButton}
+          onClick={handleRestoreAccount}
+        >
+          Восстановить аккаунт
+        </button>
+      </div>
+      
+      {/* Ссылка на регистрацию */}
+      <div className={styles.registerLink}>
+        Нет аккаунта? <a href="/register">Зарегистрироваться</a>
+      </div>
+    </div>
+  );
+};
+
+export default LoginForm;
