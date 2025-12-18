@@ -1,0 +1,108 @@
+/* Контейнер Header */
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 40px;
+  height: 80px;
+  background-color: #f9fafb;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* Логотип */
+.logo {
+  height: 60px;
+  width: auto;
+  cursor: pointer;
+  transition: opacity 0.2s ease;
+}
+
+/* Что это? */
+.logo:hover {
+  opacity: 0.8;
+}
+
+/* Навигация */
+.navbar ul {
+  display: flex;
+  gap: 40px;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.navbar a {
+  color: #1f2937;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 16px;
+  padding: 8px 0;
+  position: relative;
+  transition: color 0.2s ease;
+}
+
+.navbar a:hover {
+  color: #3b82f6;
+}
+
+/* Подчеркивание при наведении */
+.navbar a::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background-color: #3b82f6;
+  transition: width 0.3s ease;
+}
+
+.navbar a:hover::after {
+  width: 100%;
+}
+
+/* Контейнер для кнопок */
+.auth {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+}
+
+/* Общие стили для кнопок */
+.button {
+  padding: 10px 24px;
+  border-radius: 6px;
+  font-weight: 600;
+  font-size: 14px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: none;
+  outline: none;
+}
+
+/* Кнопка Sign In */
+.signIn {
+  color: #3b82f6;
+  background-color: white;
+  border: 2px solid #e5e7eb;
+}
+
+.signIn:hover {
+  background-color: #f3f4f6;
+  border-color: #3b82f6;
+}
+
+/* Кнопка Sign Up */
+.signUp {
+  color: white;
+  background-color: #3b82f6;
+}
+
+.signUp:hover {
+  background-color: #2563eb;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
