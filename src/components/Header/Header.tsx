@@ -41,9 +41,10 @@ const Header: React.FC<HeaderProps> = () => {
       {/* Навигация */}
       <nav className={styles.navbar}>
         <ul>
-          <li><a href="#overview">Обзор</a></li>
-          <li><a href="#features">Контакты</a></li>
-          <li><a href="#pricing">Новости</a></li>
+          <li><a href="#overview">Возможности</a></li>
+          <li><a href="#features">Продукт</a></li>
+          <li><a href="#pricing">Тарифы</a></li>
+          <li><a href="#pricing">Для кого</a></li>
           <li><a href="#about">О нас</a></li>
         </ul>
       </nav>
