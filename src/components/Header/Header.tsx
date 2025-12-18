@@ -1,33 +1,43 @@
 import React from "react";
-import styles from './Header.module.scss'; // Убедись в правильном имени файла
+import styles from './Header.module.scss';
 
-// Определяем тип для пропсов (пока пустой, но может пригодиться)
+// Обновляем интерфейс пропсов
 interface HeaderProps {
-  // Например: isLoggedIn?: boolean;
-  // Мы можем добавлять пропсы позже
+  onShowHero?: () => void;
+  onShowRegister?: () => void;
+  onShowLogin?: () => void;
 }
 
-const Header: React.FC<HeaderProps> = () => {
+const Header: React.FC<HeaderProps> = ({ 
+  onShowHero, 
+  onShowRegister, 
+  onShowLogin 
+}) => {
   // Обработчик клика по логотипу
   const handleLogoClick = () => {
-    // Позже добавим навигацию на главную
     console.log('Logo clicked');
+    if (onShowHero) {
+      onShowHero(); // Возвращаем на главную
+    }
     // window.location.href = '/';
   };
 
   // Обработчики для кнопок
   const handleSignIn = () => {
     console.log('Sign In clicked');
-    // Здесь будет логика входа
+    if (onShowLogin) {
+      onShowLogin(); // Показываем форму входа
+    }
   };
 
   const handleSignUp = () => {
     console.log('Sign Up clicked');
-    // Здесь будет логика регистрации
+    if (onShowRegister) {
+      onShowRegister(); // Показываем форму регистрации
+    }
   };
 
   return (
-    // Используем стиль из CSS Modules
     <header className={styles.header}>
       
       {/* Логотип */}
@@ -36,16 +46,17 @@ const Header: React.FC<HeaderProps> = () => {
         src="/img/test_logo.svg" 
         alt="Logo" 
         onClick={handleLogoClick}
+        style={{ cursor: 'pointer' }}
       />
       
       {/* Навигация */}
       <nav className={styles.navbar}>
         <ul>
-          <li><a href="#overview">Возможности</a></li>
-          <li><a href="#features">Продукт</a></li>
-          <li><a href="#pricing">Тарифы</a></li>
-          <li><a href="#pricing">Для кого</a></li>
-          <li><a href="#about">О нас</a></li>
+          <li><a href="#overview" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>Возможности</a></li>
+          <li><a href="#features" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>Продукт</a></li>
+          <li><a href="#pricing" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>Тарифы</a></li>
+          <li><a href="#forwhom" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>Для кого</a></li>
+          <li><a href="#about" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>О нас</a></li>
         </ul>
       </nav>
       
