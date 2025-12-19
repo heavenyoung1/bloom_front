@@ -102,7 +102,6 @@ const LoginForm: React.FC = () => {
       
       if (isSuccess) {
         setIsSuccess(true);
-        console.log('Вход выполнен успешно!', response.data);
         
         setTimeout(() => {
           window.location.href = '/dashboard';
@@ -134,8 +133,6 @@ const LoginForm: React.FC = () => {
       }
       
     } catch (error: any) {
-      console.error('Ошибка входа:', error);
-      
       // Улучшенная обработка ошибок
       let errorMessage = 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.';
       

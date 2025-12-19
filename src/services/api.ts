@@ -94,13 +94,6 @@ const apiClient = {
     
     if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
       config.body = JSON.stringify(data);
-      // Логируем данные запроса для отладки
-      console.log('API Request:', {
-        url,
-        method,
-        body: config.body,
-        data
-      });
     }
     
     try {
@@ -129,14 +122,6 @@ const apiClient = {
       }
       
       if (!response.ok) {
-        // Логируем полный ответ сервера при ошибке для отладки
-        console.error('Server error response:', {
-          status: response.status,
-          statusText: response.statusText,
-          data: responseData,
-          url: url
-        });
-        
         // Извлекаем сообщение об ошибке из различных возможных полей
         let errorMessage = 'Ошибка сервера';
         

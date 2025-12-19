@@ -149,9 +149,6 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
     try {
       const response = await authApi.forgotPassword(forgotFormData.email);
       
-      // Логируем ответ для отладки
-      console.log('Forgot password response:', response);
-      
       // Если запрос не выбросил ошибку (статус 200), считаем успешным
       // Проверяем: если success === false, то ошибка, иначе - успех
       // Если response пустой или undefined, но запрос не выбросил ошибку - тоже успех
@@ -159,9 +156,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
       
       if (isSuccess) {
         // Сохраняем email и переходим к следующему шагу
-        const savedEmail = forgotFormData.email;
-        console.log('Saving email for reset step:', savedEmail);
-        setEmail(savedEmail);
+        setEmail(forgotFormData.email);
         setStep('reset');
         setForgotErrors({});
       } else {
@@ -170,8 +165,6 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         });
       }
     } catch (error: any) {
-      console.error('Ошибка восстановления пароля:', error);
-      
       let errorMessage = 'Ошибка отправки запроса. Попробуйте еще раз.';
       
       if (error.message) {
@@ -211,24 +204,12 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
       return;
     }
     
-    // Логируем данные перед отправкой
-    console.log('Reset password data:', {
-      email,
-      code: resetFormData.code,
-      password: resetFormData.password,
-      emailLength: email.length,
-      emailIsEmpty: !email || !email.trim()
-    });
-    
     try {
       const response = await authApi.resetPassword(
         email,
         resetFormData.code,
         resetFormData.password
       );
-      
-      // Логируем ответ для отладки
-      console.log('Reset password response:', response);
       
       // Если запрос не выбросил ошибку (статус 200), считаем успешным
       // Проверяем: если success === false, то ошибка, иначе - успех
@@ -255,14 +236,6 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
         });
       }
     } catch (error: any) {
-      console.error('Ошибка сброса пароля:', error);
-      console.error('Полный объект ошибки:', {
-        message: error.message,
-        status: error.status,
-        errors: error.errors,
-        fullResponse: error.fullResponse
-      });
-      
       let errorMessage = 'Ошибка сброса пароля. Проверьте код и попробуйте еще раз.';
       
       if (error.message) {

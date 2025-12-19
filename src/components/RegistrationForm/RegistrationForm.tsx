@@ -200,8 +200,6 @@ const RegistrationForm: React.FC = () => {
       }
       
     } catch (error: any) {
-      console.error('Ошибка регистрации:', error);
-      
       // Проверяем, может быть это успешная регистрация, но с ошибкой HTTP
       // Некоторые серверы могут возвращать 201 или другой статус при успешной регистрации
       if (error.status === 201 || (error.message && error.message.includes('created'))) {
@@ -261,8 +259,6 @@ const RegistrationForm: React.FC = () => {
       }
     } catch (error: any) {
       // Обрабатываем ошибки от сервера
-      console.error('Verification error:', error);
-      
       // По умолчанию для верификации считаем, что код неверный
       let errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
       
