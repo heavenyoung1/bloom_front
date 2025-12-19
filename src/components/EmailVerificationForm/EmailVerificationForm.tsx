@@ -126,32 +126,55 @@ const EmailVerificationForm: React.FC<EmailVerificationFormProps> = ({
       console.error('Ошибка верификации:', error);
       
       // Улучшенная обработка ошибок
-      let errorMessage = 'Ошибка верификации. Попробуйте еще раз.';
+      // По умолчанию считаем, что код неверный (самая частая ошибка)
+      let errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
       
-      if (error.message) {
-        // Проверяем различные типы ошибок
-        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
-          errorMessage = 'Ошибка подключения к серверу. Проверьте интернет-соединение и попробуйте еще раз.';
-        } else if (error.message.includes('CORS')) {
-          errorMessage = 'Ошибка подключения к серверу. Обратитесь к администратору.';
-        } else if (error.status === 400) {
-          errorMessage = 'Неверный код подтверждения. Проверьте код и попробуйте еще раз.';
+      // Проверяем статус ошибки в первую очередь
+      if (error?.status !== undefined && error.status !== 0) {
+        if (error.status === 400) {
+          // При ошибке 400 код точно неверный
+          errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
         } else if (error.status === 404) {
           errorMessage = 'Код не найден или истек срок действия. Запросите новый код.';
         } else if (error.status === 500) {
           errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
-        } else if (error.message) {
+        } else if (error?.message && !error.message.toLowerCase().includes('failed to fetch')) {
           errorMessage = error.message;
         }
-      } else if (error.errors) {
-        // Если есть ошибки валидации
+      } 
+      // Проверяем ошибки валидации (обычно это означает неверный код)
+      else if (error?.errors) {
         const errorKeys = Object.keys(error.errors);
         if (errorKeys.length > 0) {
           const firstError = error.errors[errorKeys[0]];
           if (Array.isArray(firstError) && firstError.length > 0) {
             errorMessage = firstError[0];
+          } else if (typeof firstError === 'string') {
+            errorMessage = firstError;
           }
         }
+      }
+      // Проверяем сообщение об ошибке только если это НЕ ошибка сети
+      else if (error?.message) {
+        const msg = error.message.toLowerCase();
+        // Если это ошибка сети/CORS, показываем соответствующее сообщение
+        if (msg.includes('failed to fetch') || msg.includes('networkerror') || msg.includes('network request failed')) {
+          errorMessage = 'Ошибка подключения к серверу. Проверьте интернет-соединение и попробуйте еще раз.';
+        } else if (msg.includes('cors')) {
+          errorMessage = 'Ошибка подключения к серверу. Обратитесь к администратору.';
+        } else {
+          // Используем сообщение из ошибки
+          errorMessage = error.message;
+        }
+      }
+      // Если статус 0 или undefined, но нет сообщения - скорее всего это ошибка сети
+      else if (error?.status === 0 || error?.status === undefined) {
+        // Проверяем, не является ли это ошибкой сети
+        const errorStr = String(error).toLowerCase();
+        if (errorStr.includes('failed to fetch') || errorStr.includes('network')) {
+          errorMessage = 'Ошибка подключения к серверу. Проверьте интернет-соединение и попробуйте еще раз.';
+        }
+        // Иначе считаем, что код неверный
       }
       
       setError(errorMessage);

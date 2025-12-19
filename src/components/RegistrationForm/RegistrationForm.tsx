@@ -261,16 +261,22 @@ const RegistrationForm: React.FC = () => {
       // Обрабатываем ошибки от сервера
       console.error('Verification error:', error);
       
-      // Улучшенная обработка ошибок
-      let errorMessage = 'Ошибка верификации. Попробуйте еще раз.';
+      // По умолчанию для верификации считаем, что код неверный
+      let errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
       
+      // Обрабатываем различные статусы ошибок
       if (error.status === 400) {
-        errorMessage = 'Неверный код подтверждения. Проверьте код и попробуйте еще раз.';
+        errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
       } else if (error.status === 404) {
         errorMessage = 'Код не найден или истек срок действия. Запросите новый код.';
       } else if (error.status === 500) {
         errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
-      } else if (error.message) {
+      } else if (error.status === 0) {
+        // Статус 0 обычно означает CORS ошибку или реальную ошибку сети
+        // Но для верификации скорее всего это неверный код (CORS блокирует ответ)
+        errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
+      } else if (error.message && !error.message.toLowerCase().includes('failed to fetch')) {
+        // Используем сообщение от сервера, если это не ошибка сети
         errorMessage = error.message;
       }
       

@@ -122,26 +122,88 @@ const apiClient = {
       }
       
       if (!response.ok) {
+        // Извлекаем сообщение об ошибке из различных возможных полей
+        let errorMessage = 'Ошибка сервера';
+        
+        if (responseData.message) {
+          errorMessage = responseData.message;
+        } else if (responseData.detail) {
+          // FastAPI часто возвращает ошибки в поле detail
+          if (typeof responseData.detail === 'string') {
+            errorMessage = responseData.detail;
+          } else if (Array.isArray(responseData.detail) && responseData.detail.length > 0) {
+            errorMessage = responseData.detail[0].msg || responseData.detail[0];
+          }
+        } else if (responseData.error) {
+          errorMessage = responseData.error;
+        } else if (responseData.errors) {
+          // Если есть ошибки валидации, берем первую
+          const errorKeys = Object.keys(responseData.errors);
+          if (errorKeys.length > 0) {
+            const firstError = responseData.errors[errorKeys[0]];
+            if (Array.isArray(firstError) && firstError.length > 0) {
+              errorMessage = firstError[0];
+            } else if (typeof firstError === 'string') {
+              errorMessage = firstError;
+            }
+          }
+        }
+        
         throw {
-          message: responseData.message || responseData.detail || 'Ошибка сервера',
+          message: errorMessage,
           status: response.status,
-          errors: responseData.errors || responseData.detail,
+          errors: responseData.errors,
         } as ApiError;
       }
       
       return responseData as T;
     } catch (error: any) {
-      // Если это уже наш ApiError, пробрасываем дальше
-      if (error.status || error.message) {
+      // Если это уже наш ApiError (созданный выше), пробрасываем дальше
+      if (error.status !== undefined || (error.message && error.message !== 'Failed to fetch')) {
         console.error('API Error:', error);
         throw error;
       }
       
-      // Если это ошибка сети или CORS
-      console.error('Network/CORS Error:', error);
+      // Если это ошибка сети, CORS или другая ошибка fetch
+      console.error('Network/Fetch Error:', error);
+      
+      // Определяем тип ошибки
+      // При CORS ошибке запрос может быть отправлен, но ответ заблокирован
+      // Поэтому для эндпоинтов верификации считаем это ошибкой валидации
+      let errorMessage = 'Ошибка подключения к серверу.';
+      let status = 0;
+      
+      // Проверяем, является ли это эндпоинтом верификации
+      const isVerificationEndpoint = endpoint.includes('verify-email');
+      
+      if (error.message) {
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          // Если это эндпоинт верификации и CORS ошибка, скорее всего это неверный код
+          if (isVerificationEndpoint) {
+            errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
+            status = 400; // Устанавливаем статус 400 для неверного кода
+          } else {
+            errorMessage = 'Ошибка подключения к серверу. Проверьте интернет-соединение.';
+          }
+        } else if (error.message.includes('CORS')) {
+          if (isVerificationEndpoint) {
+            errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
+            status = 400;
+          } else {
+            errorMessage = 'Ошибка подключения к серверу. Обратитесь к администратору.';
+          }
+        } else {
+          errorMessage = error.message;
+        }
+      } else if (isVerificationEndpoint) {
+        // Для эндпоинта верификации по умолчанию считаем код неверным
+        errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
+        status = 400;
+      }
+      
       throw {
-        message: 'Ошибка подключения к серверу. Проверьте CORS настройки.',
-        status: 0,
+        message: errorMessage,
+        status: status,
       } as ApiError;
     }
   },
