@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styles from './LoginForm.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
+import ForgotPasswordForm from '../ForgotPasswordForm/ForgotPasswordForm';
 
 // Типы для формы
 interface LoginFormData {
@@ -34,6 +35,7 @@ const LoginForm: React.FC = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isSuccess, setIsSuccess] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   // Комбинированное состояние загрузки
   const isActuallySubmitting = isSubmitting || authLoading;
@@ -173,9 +175,30 @@ const LoginForm: React.FC = () => {
   // Обработчик "Забыли пароль?"
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('Переход к восстановлению пароля для:', formData.email);
-    alert(`Инструкция по восстановлению пароля отправлена на ${formData.email || 'ваш email'}`);
+    setShowForgotPassword(true);
   };
+
+  // Обработчик возврата к форме входа
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
+  };
+
+  // Обработчик успешного восстановления пароля
+  const handlePasswordResetSuccess = () => {
+    setShowForgotPassword(false);
+    // Можно показать сообщение об успехе или перенаправить на страницу входа
+  };
+
+  // Если показываем форму восстановления пароля
+  if (showForgotPassword) {
+    return (
+      <ForgotPasswordForm
+        initialEmail={formData.email}
+        onBack={handleBackToLogin}
+        onSuccess={handlePasswordResetSuccess}
+      />
+    );
+  }
 
   // Если успешно
   if (isSuccess) {

@@ -94,6 +94,13 @@ const apiClient = {
     
     if (data && (method === 'POST' || method === 'PUT' || method === 'PATCH')) {
       config.body = JSON.stringify(data);
+      // Логируем данные запроса для отладки
+      console.log('API Request:', {
+        url,
+        method,
+        body: config.body,
+        data
+      });
     }
     
     try {
@@ -122,6 +129,14 @@ const apiClient = {
       }
       
       if (!response.ok) {
+        // Логируем полный ответ сервера при ошибке для отладки
+        console.error('Server error response:', {
+          status: response.status,
+          statusText: response.statusText,
+          data: responseData,
+          url: url
+        });
+        
         // Извлекаем сообщение об ошибке из различных возможных полей
         let errorMessage = 'Ошибка сервера';
         
@@ -132,7 +147,15 @@ const apiClient = {
           if (typeof responseData.detail === 'string') {
             errorMessage = responseData.detail;
           } else if (Array.isArray(responseData.detail) && responseData.detail.length > 0) {
-            errorMessage = responseData.detail[0].msg || responseData.detail[0];
+            // Обрабатываем массив ошибок валидации FastAPI
+            const firstError = responseData.detail[0];
+            if (firstError.msg) {
+              errorMessage = `${firstError.loc ? firstError.loc.join('.') + ': ' : ''}${firstError.msg}`;
+            } else if (typeof firstError === 'string') {
+              errorMessage = firstError;
+            } else {
+              errorMessage = JSON.stringify(firstError);
+            }
           }
         } else if (responseData.error) {
           errorMessage = responseData.error;
@@ -152,7 +175,8 @@ const apiClient = {
         throw {
           message: errorMessage,
           status: response.status,
-          errors: responseData.errors,
+          errors: responseData.errors || responseData.detail,
+          fullResponse: responseData, // Добавляем полный ответ для отладки
         } as ApiError;
       }
       
@@ -237,8 +261,8 @@ export const authApi = {
   },
   
   // Сброс пароля
-  async resetPassword(token: string, password: string): Promise<{ success: boolean; message: string }> {
-    return apiClient.request('/auth/reset-password', 'POST', { token, password });
+  async resetPassword(email: string, code: string, password: string): Promise<{ success: boolean; message: string }> {
+    return apiClient.request('/auth/reset-password', 'POST', { email, code, new_password: password });
   },
 
   // Верификация email
