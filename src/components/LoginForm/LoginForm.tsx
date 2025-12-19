@@ -91,7 +91,14 @@ const LoginForm: React.FC = () => {
     try {
       const response = await login(formData.email, formData.password);
       
-      if (response.success) {
+      // Проверяем успешность входа
+      // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект с токенами
+      const isSuccess = response.success === true || 
+                        (response as any).access_token || 
+                        (response as any).access ||
+                        ((response as any).token && (response as any).email);
+      
+      if (isSuccess) {
         setIsSuccess(true);
         console.log('Вход выполнен успешно!', response.data);
         
@@ -100,6 +107,7 @@ const LoginForm: React.FC = () => {
         }, 1000);
         
       } else {
+        // Обрабатываем ошибки от сервера
         if (response.errors) {
           const serverErrors: LoginFormErrors = {};
           
@@ -115,15 +123,29 @@ const LoginForm: React.FC = () => {
             ...errors,
             submit: response.message
           });
+        } else {
+          setErrors({
+            ...errors,
+            submit: 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.'
+          });
         }
       }
       
     } catch (error: any) {
       console.error('Ошибка входа:', error);
       
-      let errorMessage = 'Ошибка входа. Проверьте email и пароль.';
+      // Улучшенная обработка ошибок
+      let errorMessage = 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.';
       
-      if (error.message) {
+      if (error.status === 401 || error.status === 403) {
+        errorMessage = 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.';
+      } else if (error.status === 400) {
+        errorMessage = 'Неверный формат данных. Проверьте email и пароль.';
+      } else if (error.status === 429) {
+        errorMessage = 'Слишком много попыток входа. Попробуйте позже.';
+      } else if (error.status === 500) {
+        errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
+      } else if (error.message && !error.message.toLowerCase().includes('failed to fetch')) {
         errorMessage = error.message;
       }
       

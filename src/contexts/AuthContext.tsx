@@ -74,10 +74,52 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authApi.login({ email, password });
       
+      // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект с токенами
+      // Проверяем оба варианта
       if (response.success && response.data) {
+        // Стандартный формат с success и data
         setUser(response.data.user);
         setToken(response.data.token);
         localStorage.setItem('token', response.data.token);
+      } else if ((response as any).access_token || (response as any).access) {
+        // Прямой объект с токенами (как возвращает бэкенд)
+        const loginData = response as any;
+        const accessToken = loginData.access_token || loginData.access || loginData.token;
+        
+        if (accessToken) {
+          setToken(accessToken);
+          localStorage.setItem('token', accessToken);
+          
+          // Если есть информация о пользователе, устанавливаем её
+          if (loginData.user) {
+            setUser(loginData.user);
+          } else if (loginData.email) {
+            // Если есть только email, создаем минимальный объект пользователя
+            setUser({
+              id: loginData.id || 0,
+              email: loginData.email,
+              first_name: loginData.first_name || '',
+              last_name: loginData.last_name || '',
+              license_id: loginData.license_id || '',
+            });
+          }
+          
+          // Возвращаем успешный ответ
+          return {
+            success: true,
+            data: {
+              user: {
+                id: loginData.id || loginData.user?.id || 0,
+                email: loginData.email || loginData.user?.email || '',
+                first_name: loginData.first_name || loginData.user?.first_name || '',
+                last_name: loginData.last_name || loginData.user?.last_name || '',
+                license_id: loginData.license_id || loginData.user?.license_id || '',
+              },
+              token: accessToken,
+              expires_in: loginData.expires_in || 3600,
+            },
+          } as AuthResponse;
+        }
       }
       
       return response;
