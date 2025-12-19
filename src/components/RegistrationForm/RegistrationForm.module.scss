@@ -30,12 +30,14 @@
   display: flex;
   flex-direction: column;
   gap: 24px;
+  width: 100%;
 }
 
 .formGroup {
   display: flex;
   flex-direction: column;
   gap: 8px;
+  width: 100%;
 }
 
 .label {
@@ -55,6 +57,20 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 16px;
+  max-width: 100%;
+  width: 100%;
+}
+
+// Убеждаемся, что поля в строке имеют одинаковую ширину с одним полем
+.row .formGroup {
+  width: 100%;
+  min-width: 0; // Позволяет полям сжиматься в grid
+}
+
+// Каждое поле в строке должно быть такой же ширины, как одно поле
+.row .formGroup .input {
+  width: 100%;
+  box-sizing: border-box;
 }
 
 .input {
