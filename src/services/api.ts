@@ -42,6 +42,37 @@ export interface ApiError {
   errors?: Record<string, string[]>;
 }
 
+export interface VerifyEmailRequest {
+  email: string;
+  code: string;
+}
+
+export interface VerifyEmailResponse {
+  success: boolean;
+  message?: string;
+  data?: {
+    user: {
+      id: number;
+      email: string;
+      first_name: string;
+      last_name: string;
+      license_id: string;
+    };
+    token: string;
+    expires_in: number;
+  };
+  errors?: Record<string, string[]>;
+}
+
+export interface ResendCodeRequest {
+  email: string;
+}
+
+export interface ResendCodeResponse {
+  success: boolean;
+  message?: string;
+}
+
 // Базовый HTTP клиент
 const apiClient = {
   async request<T>(
@@ -115,6 +146,16 @@ export const authApi = {
   // Сброс пароля
   async resetPassword(token: string, password: string): Promise<{ success: boolean; message: string }> {
     return apiClient.request('/auth/reset-password', 'POST', { token, password });
+  },
+
+  // Верификация email
+  async verifyEmail(data: VerifyEmailRequest): Promise<VerifyEmailResponse> {
+    return apiClient.request<VerifyEmailResponse>('/auth/verify-email', 'POST', data);
+  },
+
+  // Повторная отправка кода подтверждения
+  async resendVerificationCode(data: ResendCodeRequest): Promise<ResendCodeResponse> {
+    return apiClient.request<ResendCodeResponse>('/auth/resend-verification-code', 'POST', data);
   },
 };
 

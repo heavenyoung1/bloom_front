@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import styles from './RegistrationForm.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
+import EmailVerificationForm from '../EmailVerificationForm/EmailVerificationForm';
 
 // Типы для формы
 interface FormData {
@@ -33,7 +34,7 @@ interface FormErrors {
 
 const RegistrationForm: React.FC = () => {
   // Хук аутентификации
-  const { register, isLoading: authLoading } = useAuth();
+  const { register, verifyEmail, resendVerificationCode, isLoading: authLoading } = useAuth();
 
   // Состояние формы
   const [formData, setFormData] = useState<FormData>({
@@ -54,10 +55,11 @@ const RegistrationForm: React.FC = () => {
   
   // Состояние отправки
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [showVerificationForm, setShowVerificationForm] = useState(false);
 
   // Комбинированное состояние загрузки
   const isActuallySubmitting = isSubmitting || authLoading;
+
 
   // Обработчик изменения полей
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -159,15 +161,19 @@ const RegistrationForm: React.FC = () => {
     try {
       const response = await register(formData);
       
-      if (response.success) {
-        setIsSuccess(true);
-        console.log('Регистрация успешна!', response.data);
-        
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 2000);
+      // Проверяем успешность регистрации
+      // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект пользователя
+      const isSuccess = response.success === true || 
+                        ((response as any).id && (response as any).email) ||
+                        (response.data && response.data.user);
+      
+      if (isSuccess) {
+        // Показываем форму верификации
+        setShowVerificationForm(true);
         
       } else {
+        // Если success: false, показываем ошибки
+        
         if (response.errors) {
           const serverErrors: FormErrors = {};
           
@@ -183,48 +189,84 @@ const RegistrationForm: React.FC = () => {
             ...errors,
             submit: response.message
           });
+        } else {
+          setErrors({
+            ...errors,
+            submit: 'Ошибка регистрации. Попробуйте еще раз.'
+          });
         }
       }
       
     } catch (error: any) {
       console.error('Ошибка регистрации:', error);
       
-      let errorMessage = 'Ошибка регистрации. Попробуйте еще раз.';
-      
-      if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (error.errors) {
-        const serverErrors: FormErrors = {};
-        
-        Object.entries(error.errors).forEach(([field, messages]) => {
-          if (Array.isArray(messages) && messages.length > 0) {
-            serverErrors[field as keyof FormErrors] = messages[0];
-          }
-        });
-        
-        setErrors(serverErrors);
+      // Проверяем, может быть это успешная регистрация, но с ошибкой HTTP
+      // Некоторые серверы могут возвращать 201 или другой статус при успешной регистрации
+      if (error.status === 201 || (error.message && error.message.includes('created'))) {
+        setShowVerificationForm(true);
       } else {
-        setErrors({
-          ...errors,
-          submit: errorMessage
-        });
+        let errorMessage = 'Ошибка регистрации. Попробуйте еще раз.';
+        
+        if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        if (error.errors) {
+          const serverErrors: FormErrors = {};
+          
+          Object.entries(error.errors).forEach(([field, messages]) => {
+            if (Array.isArray(messages) && messages.length > 0) {
+              serverErrors[field as keyof FormErrors] = messages[0];
+            }
+          });
+          
+          setErrors(serverErrors);
+        } else {
+          setErrors({
+            ...errors,
+            submit: errorMessage
+          });
+        }
       }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Если успешно
-  if (isSuccess) {
+  // Обработчик верификации email
+  const handleVerify = async (code: string) => {
+    const response = await verifyEmail(formData.email, code);
+    
+    if (response.success) {
+      // После успешной верификации перенаправляем на dashboard
+      setTimeout(() => {
+        window.location.href = '/dashboard';
+      }, 1000);
+    }
+    
+    return response;
+  };
+
+  // Обработчик повторной отправки кода
+  const handleResendCode = async () => {
+    return await resendVerificationCode(formData.email);
+  };
+
+  // Обработчик возврата к форме регистрации
+  const handleBackToRegistration = () => {
+    setShowVerificationForm(false);
+    setErrors({});
+  };
+
+  // Если нужно показать форму верификации
+  if (showVerificationForm) {
     return (
-      <div className={styles.successWrapper}>
-        <div className={styles.successMessage}>
-          <p>✅ Ваша учетная запись успешно создана.</p>
-          <p>На ваш email отправлено письмо с подтверждением.</p>
-        </div>
-      </div>
+      <EmailVerificationForm
+        email={formData.email}
+        onVerify={handleVerify}
+        onResendCode={handleResendCode}
+        onBack={handleBackToRegistration}
+      />
     );
   }
 

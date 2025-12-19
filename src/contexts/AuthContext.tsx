@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authApi } from '../services/api';
-import type { AuthResponse } from '../services/api';
+import type { AuthResponse, VerifyEmailResponse, ResendCodeResponse } from '../services/api';
 
 interface User {
   id: number;
@@ -20,6 +20,8 @@ interface AuthContextType {
   register: (userData: any) => Promise<AuthResponse>;
   logout: () => Promise<void>;
   checkAuth: () => Promise<void>;
+  verifyEmail: (email: string, code: string) => Promise<VerifyEmailResponse>;
+  resendVerificationCode: (email: string) => Promise<ResendCodeResponse>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -93,11 +95,14 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authApi.register(userData);
       
-      if (response.success && response.data) {
-        setUser(response.data.user);
-        setToken(response.data.token);
-        localStorage.setItem('token', response.data.token);
-      }
+      // НЕ устанавливаем пользователя и токен после регистрации,
+      // так как требуется верификация email
+      // Пользователь будет установлен только после успешной верификации
+      // if (response.success && response.data && response.data.token) {
+      //   setUser(response.data.user);
+      //   setToken(response.data.token);
+      //   localStorage.setItem('token', response.data.token);
+      // }
       
       return response;
     } catch (error) {
@@ -121,6 +126,38 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Верификация email
+  const verifyEmail = async (email: string, code: string): Promise<VerifyEmailResponse> => {
+    setIsLoading(true);
+    try {
+      const response = await authApi.verifyEmail({ email, code });
+      
+      if (response.success && response.data) {
+        setUser(response.data.user);
+        setToken(response.data.token);
+        localStorage.setItem('token', response.data.token);
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Email verification failed:', error);
+      throw error;
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Повторная отправка кода подтверждения
+  const resendVerificationCode = async (email: string): Promise<ResendCodeResponse> => {
+    try {
+      const response = await authApi.resendVerificationCode({ email });
+      return response;
+    } catch (error) {
+      console.error('Resend verification code failed:', error);
+      throw error;
+    }
+  };
+
   const value: AuthContextType = {
     user,
     token,
@@ -130,6 +167,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     register,
     logout,
     checkAuth,
+    verifyEmail,
+    resendVerificationCode,
   };
 
   return (
