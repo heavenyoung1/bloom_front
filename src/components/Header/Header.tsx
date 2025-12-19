@@ -1,7 +1,7 @@
 import React from "react";
 import styles from './Header.module.scss';
+import { useAuth } from '../../contexts/AuthContext';
 
-// Обновляем интерфейс пропсов
 interface HeaderProps {
   onShowHero?: () => void;
   onShowRegister?: () => void;
@@ -13,27 +13,19 @@ const Header: React.FC<HeaderProps> = ({
   onShowRegister, 
   onShowLogin 
 }) => {
-  // Обработчик клика по логотипу
+  const { user, isAuthenticated, logout } = useAuth();
+  
+  const handleLogout = async () => {
+    await logout();
+    if (onShowHero) {
+      onShowHero();
+    }
+  };
+
   const handleLogoClick = () => {
     console.log('Logo clicked');
     if (onShowHero) {
-      onShowHero(); // Возвращаем на главную
-    }
-    // window.location.href = '/';
-  };
-
-  // Обработчики для кнопок
-  const handleSignIn = () => {
-    console.log('Sign In clicked');
-    if (onShowLogin) {
-      onShowLogin(); // Показываем форму входа
-    }
-  };
-
-  const handleSignUp = () => {
-    console.log('Sign Up clicked');
-    if (onShowRegister) {
-      onShowRegister(); // Показываем форму регистрации
+      onShowHero();
     }
   };
 
@@ -62,19 +54,35 @@ const Header: React.FC<HeaderProps> = ({
       
       {/* Кнопки авторизации */}
       <div className={styles.auth}>
-        <button 
-          className={`${styles.button} ${styles.signIn}`}
-          onClick={handleSignIn}
-        >
-          Войти
-        </button>
-        
-        <button 
-          className={`${styles.button} ${styles.signUp}`}
-          onClick={handleSignUp}
-        >
-          Регистрация
-        </button>
+        {isAuthenticated ? (
+          <>
+            <span className={styles.userGreeting}>
+              Привет, {user?.first_name}!
+            </span>
+            <button 
+              className={`${styles.button} ${styles.signOut}`}
+              onClick={handleLogout}
+            >
+              Выйти
+            </button>
+          </>
+        ) : (
+          <>
+            <button 
+              className={`${styles.button} ${styles.signIn}`}
+              onClick={onShowLogin}
+            >
+              Войти
+            </button>
+            
+            <button 
+              className={`${styles.button} ${styles.signUp}`}
+              onClick={onShowRegister}
+            >
+              Регистрация
+            </button>
+          </>
+        )}
       </div>
     </header>
   );
