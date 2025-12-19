@@ -20,6 +20,7 @@ const EmailVerificationForm: React.FC<EmailVerificationFormProps> = ({
   const [isResending, setIsResending] = useState(false);
   const [resendMessage, setResendMessage] = useState<string>('');
   const [countdown, setCountdown] = useState(0);
+  const [isSuccess, setIsSuccess] = useState(false);
   
   const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
@@ -104,9 +105,12 @@ const EmailVerificationForm: React.FC<EmailVerificationFormProps> = ({
       const response = await onVerify(codeString);
       
       if (response.success) {
-        // Успешная верификация - компонент должен обработать это через родителя
+        // Успешная верификация - показываем сообщение об успехе
+        setIsSuccess(true);
+        // Редирект произойдет через родительский компонент
         return;
       } else {
+        // Обрабатываем ошибки от сервера
         if (response.errors && response.errors.code) {
           setError(response.errors.code[0]);
         } else if (response.message) {
@@ -120,7 +124,37 @@ const EmailVerificationForm: React.FC<EmailVerificationFormProps> = ({
       }
     } catch (error: any) {
       console.error('Ошибка верификации:', error);
-      setError(error.message || 'Ошибка верификации. Попробуйте еще раз.');
+      
+      // Улучшенная обработка ошибок
+      let errorMessage = 'Ошибка верификации. Попробуйте еще раз.';
+      
+      if (error.message) {
+        // Проверяем различные типы ошибок
+        if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
+          errorMessage = 'Ошибка подключения к серверу. Проверьте интернет-соединение и попробуйте еще раз.';
+        } else if (error.message.includes('CORS')) {
+          errorMessage = 'Ошибка подключения к серверу. Обратитесь к администратору.';
+        } else if (error.status === 400) {
+          errorMessage = 'Неверный код подтверждения. Проверьте код и попробуйте еще раз.';
+        } else if (error.status === 404) {
+          errorMessage = 'Код не найден или истек срок действия. Запросите новый код.';
+        } else if (error.status === 500) {
+          errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+      } else if (error.errors) {
+        // Если есть ошибки валидации
+        const errorKeys = Object.keys(error.errors);
+        if (errorKeys.length > 0) {
+          const firstError = error.errors[errorKeys[0]];
+          if (Array.isArray(firstError) && firstError.length > 0) {
+            errorMessage = firstError[0];
+          }
+        }
+      }
+      
+      setError(errorMessage);
       setCode(['', '', '', '', '', '']);
       inputRefs.current[0]?.focus();
     } finally {
@@ -152,6 +186,21 @@ const EmailVerificationForm: React.FC<EmailVerificationFormProps> = ({
       setIsResending(false);
     }
   };
+
+  // Если верификация успешна, показываем сообщение об успехе
+  if (isSuccess) {
+    return (
+      <div className={styles.verificationForm}>
+        <div className={styles.successWrapper}>
+          <div className={styles.successIcon}>✓</div>
+          <h2 className={styles.successTitle}>Email успешно подтвержден!</h2>
+          <p className={styles.successMessage}>
+            Ваш аккаунт активирован. Вы будете перенаправлены на главную страницу...
+          </p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.verificationForm}>

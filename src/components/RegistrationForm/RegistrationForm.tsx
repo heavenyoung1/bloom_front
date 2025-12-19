@@ -245,32 +245,46 @@ const RegistrationForm: React.FC = () => {
       
       if (isSuccess) {
         // После успешной верификации перенаправляем на dashboard
+        // Задержка позволяет показать сообщение об успехе
         setTimeout(() => {
           window.location.href = '/dashboard';
-        }, 1000);
+        }, 2000);
         
         return { success: true };
       } else {
         return { 
           success: false, 
-          message: 'Неверный код подтверждения' 
+          message: 'Неверный код подтверждения. Проверьте код и попробуйте еще раз.' 
         };
       }
     } catch (error: any) {
       // Обрабатываем ошибки от сервера
       console.error('Verification error:', error);
       
+      // Улучшенная обработка ошибок
+      let errorMessage = 'Ошибка верификации. Попробуйте еще раз.';
+      
+      if (error.status === 400) {
+        errorMessage = 'Неверный код подтверждения. Проверьте код и попробуйте еще раз.';
+      } else if (error.status === 404) {
+        errorMessage = 'Код не найден или истек срок действия. Запросите новый код.';
+      } else if (error.status === 500) {
+        errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
+      } else if (error.message) {
+        errorMessage = error.message;
+      }
+      
       if (error.errors) {
         return {
           success: false,
           errors: error.errors,
-          message: error.message || 'Ошибка верификации'
+          message: errorMessage
         };
       }
       
       return {
         success: false,
-        message: error.message || 'Ошибка верификации. Попробуйте еще раз.'
+        message: errorMessage
       };
     }
   };
