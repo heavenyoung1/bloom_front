@@ -132,10 +132,43 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authApi.verifyEmail({ email, code });
       
+      // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект пользователя
+      // Проверяем оба варианта
       if (response.success && response.data) {
+        // Стандартный формат с success и data
         setUser(response.data.user);
         setToken(response.data.token);
         localStorage.setItem('token', response.data.token);
+      } else if ((response as any).id && (response as any).email) {
+        // Прямой объект пользователя (как при регистрации)
+        const userData = response as any;
+        setUser({
+          id: userData.id,
+          email: userData.email,
+          first_name: userData.first_name,
+          last_name: userData.last_name,
+          license_id: userData.license_id,
+        });
+        // Если есть токен в ответе, сохраняем его
+        if (userData.token) {
+          setToken(userData.token);
+          localStorage.setItem('token', userData.token);
+        }
+        // Возвращаем успешный ответ
+        return {
+          success: true,
+          data: {
+            user: {
+              id: userData.id,
+              email: userData.email,
+              first_name: userData.first_name,
+              last_name: userData.last_name,
+              license_id: userData.license_id,
+            },
+            token: userData.token || '',
+            expires_in: 3600,
+          },
+        } as VerifyEmailResponse;
       }
       
       return response;

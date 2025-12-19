@@ -98,20 +98,51 @@ const apiClient = {
     
     try {
       const response = await fetch(url, config);
-      const responseData = await response.json();
+      
+      // Проверяем, есть ли тело ответа перед парсингом JSON
+      let responseData: any;
+      const contentType = response.headers.get('content-type');
+      
+      if (contentType && contentType.includes('application/json')) {
+        try {
+          responseData = await response.json();
+        } catch (jsonError) {
+          // Если не удалось распарсить JSON, читаем как текст
+          const text = await response.text();
+          console.error('Failed to parse JSON response:', text);
+          throw {
+            message: 'Ошибка обработки ответа сервера',
+            status: response.status,
+          } as ApiError;
+        }
+      } else {
+        // Если ответ не JSON, читаем как текст
+        const text = await response.text();
+        responseData = { message: text || 'Ошибка сервера' };
+      }
       
       if (!response.ok) {
         throw {
-          message: responseData.message || 'Ошибка сервера',
+          message: responseData.message || responseData.detail || 'Ошибка сервера',
           status: response.status,
-          errors: responseData.errors,
+          errors: responseData.errors || responseData.detail,
         } as ApiError;
       }
       
       return responseData as T;
-    } catch (error) {
-      console.error('API Error:', error);
-      throw error;
+    } catch (error: any) {
+      // Если это уже наш ApiError, пробрасываем дальше
+      if (error.status || error.message) {
+        console.error('API Error:', error);
+        throw error;
+      }
+      
+      // Если это ошибка сети или CORS
+      console.error('Network/CORS Error:', error);
+      throw {
+        message: 'Ошибка подключения к серверу. Проверьте CORS настройки.',
+        status: 0,
+      } as ApiError;
     }
   },
 };

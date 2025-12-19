@@ -235,16 +235,44 @@ const RegistrationForm: React.FC = () => {
 
   // Обработчик верификации email
   const handleVerify = async (code: string) => {
-    const response = await verifyEmail(formData.email, code);
-    
-    if (response.success) {
-      // После успешной верификации перенаправляем на dashboard
-      setTimeout(() => {
-        window.location.href = '/dashboard';
-      }, 1000);
+    try {
+      const response = await verifyEmail(formData.email, code);
+      
+      // Проверяем успешность верификации
+      // Сервер может вернуть либо { success: true }, либо напрямую объект пользователя
+      const isSuccess = response.success === true || 
+                        ((response as any).id && (response as any).email);
+      
+      if (isSuccess) {
+        // После успешной верификации перенаправляем на dashboard
+        setTimeout(() => {
+          window.location.href = '/dashboard';
+        }, 1000);
+        
+        return { success: true };
+      } else {
+        return { 
+          success: false, 
+          message: 'Неверный код подтверждения' 
+        };
+      }
+    } catch (error: any) {
+      // Обрабатываем ошибки от сервера
+      console.error('Verification error:', error);
+      
+      if (error.errors) {
+        return {
+          success: false,
+          errors: error.errors,
+          message: error.message || 'Ошибка верификации'
+        };
+      }
+      
+      return {
+        success: false,
+        message: error.message || 'Ошибка верификации. Попробуйте еще раз.'
+      };
     }
-    
-    return response;
   };
 
   // Обработчик повторной отправки кода
