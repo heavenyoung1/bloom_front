@@ -157,24 +157,18 @@ const RegistrationForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Отправляем данные через AuthContext
       const response = await register(formData);
       
       if (response.success) {
-        // Успешная регистрация
         setIsSuccess(true);
         console.log('Регистрация успешна!', response.data);
         
-        // Перенаправление на dashboard через 2 секунды
         setTimeout(() => {
-          // В будущем заменим на React Router
           window.location.href = '/dashboard';
         }, 2000);
         
       } else {
-        // Обработка ошибок от сервера
         if (response.errors) {
-          // Преобразуем ошибки сервера в наш формат
           const serverErrors: FormErrors = {};
           
           Object.entries(response.errors).forEach(([field, messages]) => {
@@ -197,13 +191,11 @@ const RegistrationForm: React.FC = () => {
       
       let errorMessage = 'Ошибка регистрации. Попробуйте еще раз.';
       
-      // Обработка разных типов ошибок
       if (error.message) {
         errorMessage = error.message;
       }
       
       if (error.errors) {
-        // Ошибки валидации от сервера
         const serverErrors: FormErrors = {};
         
         Object.entries(error.errors).forEach(([field, messages]) => {
@@ -227,8 +219,7 @@ const RegistrationForm: React.FC = () => {
   // Если успешно
   if (isSuccess) {
     return (
-      <div className={styles.registration}>
-        <h2 className={styles.title}>Регистрация завершена!</h2>
+      <div className={styles.successWrapper}>
         <div className={styles.successMessage}>
           <p>✅ Ваша учетная запись успешно создана.</p>
           <p>На ваш email отправлено письмо с подтверждением.</p>
@@ -238,12 +229,7 @@ const RegistrationForm: React.FC = () => {
   }
 
   return (
-    <div className={styles.registration}>
-      <h2 className={styles.title}>Регистрация в CRM для юристов</h2>
-      <p className={styles.subtitle}>
-        Создайте аккаунт для управления делами и клиентами
-      </p>
-      
+    <div className={styles.registrationForm}>
       <form className={styles.form} onSubmit={handleSubmit}>
         {/* Лицензионный номер */}
         <div className={styles.formGroup}>
@@ -434,10 +420,6 @@ const RegistrationForm: React.FC = () => {
           >
             {isActuallySubmitting ? 'Регистрация...' : 'Зарегистрироваться'}
           </button>
-
-          <p className={styles.loginLink}>
-            Уже есть аккаунт? <a href="/login">Войти</a>
-          </p>
         </div>
       </form>
     </div>

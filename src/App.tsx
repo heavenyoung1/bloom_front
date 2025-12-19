@@ -1,30 +1,20 @@
-import { useState } from 'react';
-import { AuthProvider } from './contexts/AuthContext'; // Импортируем AuthProvider
-import Header from './components/Header/Header';
-import Hero from './components/Hero/Hero';
-import RegistrationForm from './components/RegistrationForm/RegistrationForm';
-import LoginForm from './components/LoginForm/LoginForm';
+import React from 'react';
+import { AuthProvider } from './contexts/AuthContext';
+import AuthForm from './components/AuthForm/AuthForm';
 import './App.css';
 
 function App() {
-  const [currentPage, setCurrentPage] = useState<'hero' | 'register' | 'login'>('hero');
-  
-  const showHero = () => setCurrentPage('hero');
-  const showRegister = () => setCurrentPage('register');
-  const showLogin = () => setCurrentPage('login');
-  
   return (
-    <AuthProvider> {/* ВСЁ ОБОРАЧИВАЕМ В AuthProvider */}
+    <AuthProvider>
       <div className="App">
-        <Header 
-          onShowHero={showHero}
-          onShowRegister={showRegister}
-          onShowLogin={showLogin}
-        />
+        {/* Можно оставить минимальный Header или полностью убрать */}
+        {/* <Header /> - удаляем или комментируем */}
         
-        {currentPage === 'hero' && <Hero />}
-        {currentPage === 'register' && <RegistrationForm />}
-        {currentPage === 'login' && <LoginForm />}
+        {/* Показываем только AuthForm */}
+        <AuthForm />
+        
+        {/* Hero и другие компоненты больше не показываем */}
+        {/* {currentPage === 'hero' && <Hero />} - удаляем */}
       </div>
     </AuthProvider>
   );

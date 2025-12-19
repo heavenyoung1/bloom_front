@@ -78,7 +78,7 @@ const LoginForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Обработчик отправки формы с реальным API
+  // Обработчик отправки формы
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -89,27 +89,22 @@ const LoginForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Используем login из AuthContext (не register!)
       const response = await login(formData.email, formData.password);
       
       if (response.success) {
-        // Успешный вход
         setIsSuccess(true);
         console.log('Вход выполнен успешно!', response.data);
         
-        // Перенаправление на dashboard
         setTimeout(() => {
           window.location.href = '/dashboard';
         }, 1000);
         
       } else {
-        // Обработка ошибок
         if (response.errors) {
           const serverErrors: LoginFormErrors = {};
           
           Object.entries(response.errors).forEach(([field, messages]) => {
             if (messages && messages.length > 0) {
-              // Используем правильный тип для field
               serverErrors[field as keyof LoginFormErrors] = messages[0];
             }
           });
@@ -157,30 +152,13 @@ const LoginForm: React.FC = () => {
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
     console.log('Переход к восстановлению пароля для:', formData.email);
-    
-    // Здесь обычно: открытие модалки или переход на страницу восстановления
     alert(`Инструкция по восстановлению пароля отправлена на ${formData.email || 'ваш email'}`);
-  };
-
-  // Обработчик "Восстановить аккаунт"
-  const handleRestoreAccount = () => {
-    console.log('Восстановление аккаунта');
-    
-    // Здесь обычно: переход на страницу восстановления/реактивации
-    // window.location.href = '/restore-account';
-    
-    alert('Функция восстановления аккаунта. Свяжитесь с поддержкой: support@legalcrm.com');
   };
 
   // Если успешно
   if (isSuccess) {
     return (
-      <div className={styles.login}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Добро пожаловать!</h2>
-          <p className={styles.subtitle}>Вход выполнен успешно</p>
-        </div>
-        
+      <div className={styles.successWrapper}>
         <div className={styles.successMessage}>
           <p>✅ Вы успешно вошли в систему.</p>
           <p>Перенаправляем в личный кабинет...</p>
@@ -190,14 +168,7 @@ const LoginForm: React.FC = () => {
   }
 
   return (
-    <div className={styles.login}>
-      <div className={styles.header}>
-        <h2 className={styles.title}>Вход в CRM</h2>
-        <p className={styles.subtitle}>
-          Введите ваши учетные данные для доступа к системе
-        </p>
-      </div>
-      
+    <div className={styles.loginForm}>
       <form className={styles.form} onSubmit={handleSubmit}>
         {/* Email */}
         <div className={styles.formGroup}>
@@ -288,27 +259,6 @@ const LoginForm: React.FC = () => {
           </button>
         </div>
       </form>
-      
-      {/* Разделитель */}
-      <div className={styles.divider}>
-        <span>или</span>
-      </div>
-      
-      {/* Кнопка восстановления аккаунта */}
-      <div className={styles.buttons}>
-        <button
-          type="button"
-          className={styles.restoreAccountButton}
-          onClick={handleRestoreAccount}
-        >
-          Восстановить аккаунт
-        </button>
-      </div>
-      
-      {/* Ссылка на регистрацию */}
-      <div className={styles.registerLink}>
-        Нет аккаунта? <a href="/register">Зарегистрироваться</a>
-      </div>
     </div>
   );
 };
