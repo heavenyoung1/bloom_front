@@ -254,7 +254,7 @@ const LoginForm: React.FC = () => {
               onClick={() => setShowPassword(!showPassword)}
               title={showPassword ? "Скрыть пароль" : "Показать пароль"}
             >
-              {showPassword ? "👁️" : "👁️‍🗨️"}
+              {showPassword ? "Скрыть" : "Показать"}
             </button>
           </div>
           

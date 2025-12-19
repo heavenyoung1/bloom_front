@@ -56,6 +56,8 @@ const RegistrationForm: React.FC = () => {
   // Состояние отправки
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showVerificationForm, setShowVerificationForm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Комбинированное состояние загрузки
   const isActuallySubmitting = isSubmitting || authLoading;
@@ -443,14 +445,24 @@ const RegistrationForm: React.FC = () => {
             <label className={styles.label}>
               Пароль <span className={styles.required}>*</span>
             </label>
-            <input
-              type="password"
-              name="password"
-              value={formData.password}
-              onChange={handleInputChange}
-              placeholder="SecurePass123!"
-              className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
-            />
+            <div className={styles.inputWrapper}>
+              <input
+                type={showPassword ? "text" : "password"}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+                placeholder="SecurePass123!"
+                className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowPassword(!showPassword)}
+                title={showPassword ? "Скрыть пароль" : "Показать пароль"}
+              >
+                {showPassword ? "Скрыть" : "Показать"}
+              </button>
+            </div>
             {errors.password && <span className={styles.error}>{errors.password}</span>}
             <div className={styles.passwordHint}>
               Минимум 8 символов, заглавная и строчная буквы, цифра, спецсимвол
@@ -461,14 +473,24 @@ const RegistrationForm: React.FC = () => {
             <label className={styles.label}>
               Подтвердите пароль <span className={styles.required}>*</span>
             </label>
-            <input
-              type="password"
-              name="confirm_password"
-              value={formData.confirm_password}
-              onChange={handleInputChange}
-              placeholder="Повторите пароль"
-              className={`${styles.input} ${errors.confirm_password ? styles.inputError : ''}`}
-            />
+            <div className={styles.inputWrapper}>
+              <input
+                type={showConfirmPassword ? "text" : "password"}
+                name="confirm_password"
+                value={formData.confirm_password}
+                onChange={handleInputChange}
+                placeholder="Повторите пароль"
+                className={`${styles.input} ${errors.confirm_password ? styles.inputError : ''}`}
+              />
+              <button
+                type="button"
+                className={styles.passwordToggle}
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                title={showConfirmPassword ? "Скрыть пароль" : "Показать пароль"}
+              >
+                {showConfirmPassword ? "Скрыть" : "Показать"}
+              </button>
+            </div>
             {errors.confirm_password && (
               <span className={styles.error}>{errors.confirm_password}</span>
             )}
