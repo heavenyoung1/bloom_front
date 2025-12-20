@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './LoginForm.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
 import ForgotPasswordForm from '../ForgotPasswordForm/ForgotPasswordForm';
@@ -20,6 +21,7 @@ interface LoginFormErrors {
 const LoginForm: React.FC = () => {
   // Хук аутентификации
   const { login, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   // Состояние формы
   const [formData, setFormData] = useState<LoginFormData>({
@@ -104,7 +106,7 @@ const LoginForm: React.FC = () => {
         setIsSuccess(true);
         
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          navigate('/dashboard');
         }, 1000);
         
       } else {
@@ -136,7 +138,10 @@ const LoginForm: React.FC = () => {
       // Улучшенная обработка ошибок
       let errorMessage = 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.';
       
-      if (error.status === 401 || error.status === 403) {
+      // Обработка CORS ошибок (status 0)
+      if (error.status === 0) {
+        errorMessage = 'Ошибка подключения к серверу. Проверьте настройки CORS на бэкенде. Убедитесь, что бэкенд разрешает запросы с origin http://localhost:5173';
+      } else if (error.status === 401 || error.status === 403) {
         errorMessage = 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.';
       } else if (error.status === 400) {
         errorMessage = 'Неверный формат данных. Проверьте email и пароль.';
@@ -144,8 +149,14 @@ const LoginForm: React.FC = () => {
         errorMessage = 'Слишком много попыток входа. Попробуйте позже.';
       } else if (error.status === 500) {
         errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
-      } else if (error.message && !error.message.toLowerCase().includes('failed to fetch')) {
-        errorMessage = error.message;
+      } else if (error.message) {
+        // Проверяем на CORS ошибки в сообщении
+        const msg = error.message.toLowerCase();
+        if (msg.includes('cors') || msg.includes('failed to fetch') || msg.includes('networkerror')) {
+          errorMessage = 'Ошибка подключения к серверу. Проверьте настройки CORS на бэкенде.';
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       if (error.errors) {

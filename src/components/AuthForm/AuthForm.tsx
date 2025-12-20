@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useLocation } from 'react-router-dom';
 import styles from './AuthForm.module.scss';
 import LoginForm from '../LoginForm/LoginForm';
 import RegistrationForm from '../RegistrationForm/RegistrationForm';
@@ -7,8 +8,20 @@ import RegistrationForm from '../RegistrationForm/RegistrationForm';
 type AuthTab = 'login' | 'register';
 
 const AuthForm: React.FC = () => {
-  // Состояние активной вкладки
-  const [activeTab, setActiveTab] = useState<AuthTab>('login');
+  const location = useLocation();
+  // Определяем активную вкладку на основе URL
+  const [activeTab, setActiveTab] = useState<AuthTab>(
+    location.pathname === '/register' ? 'register' : 'login'
+  );
+
+  // Обновляем вкладку при изменении URL
+  useEffect(() => {
+    if (location.pathname === '/register') {
+      setActiveTab('register');
+    } else {
+      setActiveTab('login');
+    }
+  }, [location.pathname]);
   
   // Обработчики переключения вкладок
   const handleLoginTabClick = () => setActiveTab('login');

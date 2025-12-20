@@ -83,10 +83,19 @@ const apiClient = {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
+    // Получаем токен из localStorage для защищенных запросов
+    const token = localStorage.getItem('token');
+    const authHeaders: Record<string, string> = {};
+    
+    if (token) {
+      authHeaders['Authorization'] = `Bearer ${token}`;
+    }
+    
     const config: RequestInit = {
       method,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...headers,
       },
       credentials: 'include', // Для работы с куки/сессиями
@@ -210,10 +219,12 @@ const apiClient = {
         status = 400;
       }
       
-      throw {
+      const apiError: ApiError = {
         message: errorMessage,
         status: status,
-      } as ApiError;
+      };
+      
+      throw apiError;
     }
   },
 };
@@ -237,7 +248,7 @@ export const authApi = {
   
   // Проверка токена/сессии
   async me(): Promise<AuthResponse> {
-    return apiClient.request<AuthResponse>('/auth/me', 'GET');
+    return apiClient.request<AuthResponse>('/me', 'GET');
   },
   
   // Восстановление пароля

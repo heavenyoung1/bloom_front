@@ -163,51 +163,71 @@ const RegistrationForm: React.FC = () => {
     try {
       const response = await register(formData);
       
-      // Проверяем успешность регистрации
-      // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект пользователя
-      const isSuccess = response.success === true || 
-                        ((response as any).id && (response as any).email) ||
-                        (response.data && response.data.user);
+      console.log('Registration response:', response); // Для отладки
+      console.log('Response type:', typeof response); // Для отладки
+      console.log('Response keys:', Object.keys(response || {})); // Для отладки
       
-      if (isSuccess) {
-        // Показываем форму верификации
-        setShowVerificationForm(true);
+      // Если есть явные ошибки валидации, показываем их
+      if (response && (response as any).errors && Object.keys((response as any).errors).length > 0) {
+        console.log('Registration has errors, not showing verification form'); // Для отладки
+        const serverErrors: FormErrors = {};
         
-      } else {
-        // Если success: false, показываем ошибки
+        Object.entries((response as any).errors).forEach(([field, messages]: [string, any]) => {
+          if (messages && messages.length > 0) {
+            serverErrors[field as keyof FormErrors] = messages[0];
+          }
+        });
         
-        if (response.errors) {
-          const serverErrors: FormErrors = {};
-          
-          Object.entries(response.errors).forEach(([field, messages]) => {
-            if (messages && messages.length > 0) {
-              serverErrors[field as keyof FormErrors] = messages[0];
-            }
-          });
-          
-          setErrors(serverErrors);
-        } else if (response.message) {
-          setErrors({
-            ...errors,
-            submit: response.message
-          });
-        } else {
-          setErrors({
-            ...errors,
-            submit: 'Ошибка регистрации. Попробуйте еще раз.'
-          });
-        }
+        setErrors(serverErrors);
+        return; // Не показываем форму верификации при ошибках
       }
       
+      // Если success явно false, показываем ошибку
+      if (response && (response as any).success === false) {
+        console.log('Registration failed (success: false), not showing verification form'); // Для отладки
+        setErrors({
+          ...errors,
+          submit: (response as any).message || 'Ошибка регистрации. Попробуйте еще раз.'
+        });
+        return;
+      }
+      
+      // Если регистрация успешна (нет ошибок), всегда показываем форму верификации
+      // Это может быть либо { success: true, data: {...} }, либо напрямую объект пользователя { id, email, ... }
+      console.log('Registration successful, setting showVerificationForm to true'); // Для отладки
+      setShowVerificationForm(true);
+      
     } catch (error: any) {
+      console.log('Registration error:', error); // Для отладки
+      
       // Проверяем, может быть это успешная регистрация, но с ошибкой HTTP
       // Некоторые серверы могут возвращать 201 или другой статус при успешной регистрации
-      if (error.status === 201 || (error.message && error.message.includes('created'))) {
+      const isRegistrationSuccess = error.status === 201 || 
+                                    (error.status >= 200 && error.status < 300) ||
+                                    (error.message && (
+                                      error.message.toLowerCase().includes('created') ||
+                                      error.message.toLowerCase().includes('успешно') ||
+                                      error.message.toLowerCase().includes('success') ||
+                                      error.message.toLowerCase().includes('отправлен') ||
+                                      error.message.toLowerCase().includes('sent')
+                                    )) ||
+                                    // Если в fullResponse есть данные, возможно регистрация успешна
+                                    (error.fullResponse && (error.fullResponse.id || error.fullResponse.email));
+      
+      if (isRegistrationSuccess) {
+        console.log('Showing verification form (from error handler)'); // Для отладки
+        // Показываем форму верификации, если считаем регистрацию успешной
         setShowVerificationForm(true);
-      } else {
-        let errorMessage = 'Ошибка регистрации. Попробуйте еще раз.';
+        return; // Важно: выходим, чтобы не показывать ошибку
+      }
+      
+      // Если это не успешная регистрация, показываем ошибку
+      let errorMessage = 'Ошибка регистрации. Попробуйте еще раз.';
         
-        if (error.message) {
+        // Улучшенная обработка CORS ошибок
+        if (error.status === 0) {
+          errorMessage = 'Ошибка подключения к серверу. Проверьте настройки CORS на бэкенде или попробуйте позже.';
+        } else if (error.message) {
           errorMessage = error.message;
         }
         
@@ -227,7 +247,6 @@ const RegistrationForm: React.FC = () => {
             submit: errorMessage
           });
         }
-      }
     } finally {
       setIsSubmitting(false);
     }
@@ -304,7 +323,8 @@ const RegistrationForm: React.FC = () => {
     setErrors({});
   };
 
-  // Если нужно показать форму верификации
+  // Если нужно показать форму верификации, показываем её независимо от состояния загрузки
+  // Это важно, чтобы форма не исчезала во время загрузки
   if (showVerificationForm) {
     return (
       <EmailVerificationForm
