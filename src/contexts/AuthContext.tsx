@@ -53,16 +53,27 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setToken(response.data.token);
         localStorage.setItem('token', response.data.token);
       } else {
-        // Токен невалидный
+        // Токен невалидный - только если пользователь еще не установлен
+        // Если пользователь уже установлен, не удаляем его (может быть проблема с эндпоинтом)
+        if (!user) {
+          localStorage.removeItem('token');
+          setToken(null);
+          setUser(null);
+        }
+      }
+    } catch (error: any) {
+      console.error('Auth check failed:', error);
+      // Удаляем токен только если это не 404 или если пользователь не установлен
+      // 404 может означать проблему с эндпоинтом, а не с токеном
+      if (error.status !== 404 || !user) {
         localStorage.removeItem('token');
         setToken(null);
         setUser(null);
+      } else {
+        // Если есть пользователь, но /me возвращает 404, возможно проблема с эндпоинтом
+        // Не удаляем пользователя и токен, так как они могут быть валидными
+        console.warn('Auth check returned 404, but user is already set. Possibly endpoint issue.');
       }
-    } catch (error) {
-      console.error('Auth check failed:', error);
-      localStorage.removeItem('token');
-      setToken(null);
-      setUser(null);
     } finally {
       setIsLoading(false);
     }
@@ -74,6 +85,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authApi.login({ email, password });
       
+      console.log('Login response:', response); // Для отладки
+      
       // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект с токенами
       // Проверяем оба варианта
       if (response.success && response.data) {
@@ -81,7 +94,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         setUser(response.data.user);
         setToken(response.data.token);
         localStorage.setItem('token', response.data.token);
-      } else if ((response as any).access_token || (response as any).access) {
+        console.log('Token saved after login (standard format)'); // Для отладки
+      } else if ((response as any).access_token || (response as any).access || (response as any).token) {
         // Прямой объект с токенами (как возвращает бэкенд)
         const loginData = response as any;
         const accessToken = loginData.access_token || loginData.access || loginData.token;
@@ -89,19 +103,23 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         if (accessToken) {
           setToken(accessToken);
           localStorage.setItem('token', accessToken);
+          console.log('Token saved after login (token format)'); // Для отладки
           
           // Если есть информация о пользователе, устанавливаем её
           if (loginData.user) {
             setUser(loginData.user);
-          } else if (loginData.email) {
-            // Если есть только email, создаем минимальный объект пользователя
-            setUser({
-              id: loginData.id || 0,
-              email: loginData.email,
-              first_name: loginData.first_name || '',
-              last_name: loginData.last_name || '',
-              license_id: loginData.license_id || '',
-            });
+            console.log('User saved after login (from user field):', loginData.user); // Для отладки
+          } else if (loginData.email || loginData.id) {
+            // Если есть только email или id, создаем минимальный объект пользователя
+            const userData = {
+              id: loginData.id || loginData.user?.id || 0,
+              email: loginData.email || loginData.user?.email || '',
+              first_name: loginData.first_name || loginData.user?.first_name || '',
+              last_name: loginData.last_name || loginData.user?.last_name || '',
+              license_id: loginData.license_id || loginData.user?.license_id || '',
+            };
+            setUser(userData);
+            console.log('User saved after login (constructed):', userData); // Для отладки
           }
           
           // Возвращаем успешный ответ
@@ -122,6 +140,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         }
       }
       
+      // Если дошли сюда, токен не был найден
+      console.warn('No token found in login response'); // Для отладки
       return response;
     } catch (error) {
       console.error('Login failed:', error);
@@ -174,40 +194,73 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     try {
       const response = await authApi.verifyEmail({ email, code });
       
-      // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект пользователя
-      // Проверяем оба варианта
+      console.log('Verify email response:', response); // Для отладки
+      
+      // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект с токенами
+      // Проверяем все возможные форматы
+      let tokenToSave: string | null = null;
+      let userToSave: User | null = null;
+      
       if (response.success && response.data) {
         // Стандартный формат с success и data
-        setUser(response.data.user);
-        setToken(response.data.token);
-        localStorage.setItem('token', response.data.token);
-      } else if ((response as any).id && (response as any).email) {
-        // Прямой объект пользователя (как при регистрации)
-        const userData = response as any;
-        setUser({
-          id: userData.id,
-          email: userData.email,
-          first_name: userData.first_name,
-          last_name: userData.last_name,
-          license_id: userData.license_id,
-        });
-        // Если есть токен в ответе, сохраняем его
-        if (userData.token) {
-          setToken(userData.token);
-          localStorage.setItem('token', userData.token);
+        tokenToSave = response.data.token;
+        userToSave = response.data.user;
+      } else {
+        // Проверяем различные форматы ответа
+        const responseData = response as any;
+        
+        // Ищем токен в различных полях
+        tokenToSave = responseData.token || 
+                     responseData.access_token || 
+                     responseData.access ||
+                     responseData.data?.token ||
+                     responseData.data?.access_token;
+        
+        // Ищем данные пользователя
+        if (responseData.user) {
+          userToSave = {
+            id: responseData.user.id || responseData.id,
+            email: responseData.user.email || responseData.email,
+            first_name: responseData.user.first_name || responseData.first_name || '',
+            last_name: responseData.user.last_name || responseData.last_name || '',
+            license_id: responseData.user.license_id || responseData.license_id || '',
+          };
+        } else if (responseData.id && responseData.email) {
+          // Прямой объект пользователя (как при регистрации)
+          userToSave = {
+            id: responseData.id,
+            email: responseData.email,
+            first_name: responseData.first_name || '',
+            last_name: responseData.last_name || '',
+            license_id: responseData.license_id || '',
+          };
         }
-        // Возвращаем успешный ответ
+      }
+      
+      // Сохраняем токен и пользователя, если они найдены
+      if (tokenToSave) {
+        setToken(tokenToSave);
+        localStorage.setItem('token', tokenToSave);
+        console.log('Token saved after verification'); // Для отладки
+      } else {
+        console.warn('No token found in verification response'); // Для отладки
+      }
+      
+      if (userToSave) {
+        setUser(userToSave);
+        console.log('User saved after verification:', userToSave); // Для отладки
+      }
+      
+      // Если не нашли токен или пользователя в стандартном формате, возвращаем ответ как есть
+      // но с установленными данными если они были найдены
+      if (response.success && response.data) {
+        return response;
+      } else if (tokenToSave && userToSave) {
         return {
           success: true,
           data: {
-            user: {
-              id: userData.id,
-              email: userData.email,
-              first_name: userData.first_name,
-              last_name: userData.last_name,
-              license_id: userData.license_id,
-            },
-            token: userData.token || '',
+            user: userToSave,
+            token: tokenToSave,
             expires_in: 3600,
           },
         } as VerifyEmailResponse;

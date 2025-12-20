@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './RegistrationForm.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
 import EmailVerificationForm from '../EmailVerificationForm/EmailVerificationForm';
@@ -35,6 +36,7 @@ interface FormErrors {
 const RegistrationForm: React.FC = () => {
   // Хук аутентификации
   const { register, verifyEmail, resendVerificationCode, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   // Состояние формы
   const [formData, setFormData] = useState<FormData>({
@@ -266,7 +268,7 @@ const RegistrationForm: React.FC = () => {
         // После успешной верификации перенаправляем на dashboard
         // Задержка позволяет показать сообщение об успехе
         setTimeout(() => {
-          window.location.href = '/dashboard';
+          navigate('/dashboard');
         }, 2000);
         
         return { success: true };

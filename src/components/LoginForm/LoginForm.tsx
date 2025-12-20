@@ -36,7 +36,6 @@ const LoginForm: React.FC = () => {
   // Состояния UI
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
   const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   // Комбинированное состояние загрузки
@@ -103,11 +102,10 @@ const LoginForm: React.FC = () => {
                         ((response as any).token && (response as any).email);
       
       if (isSuccess) {
-        setIsSuccess(true);
-        
-        setTimeout(() => {
-          navigate('/dashboard');
-        }, 1000);
+        console.log('Login successful, navigating to dashboard'); // Для отладки
+        // Сразу навигируем, не показывая сообщение об успехе
+        // чтобы избежать проблем с состоянием
+        navigate('/dashboard');
         
       } else {
         // Обрабатываем ошибки от сервера
@@ -205,18 +203,6 @@ const LoginForm: React.FC = () => {
         onBack={handleBackToLogin}
         onSuccess={handlePasswordResetSuccess}
       />
-    );
-  }
-
-  // Если успешно
-  if (isSuccess) {
-    return (
-      <div className={styles.successWrapper}>
-        <div className={styles.successMessage}>
-          <p>✅ Вы успешно вошли в систему.</p>
-          <p>Перенаправляем в личный кабинет...</p>
-        </div>
-      </div>
     );
   }
 
