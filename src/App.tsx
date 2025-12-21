@@ -5,6 +5,7 @@ import Dashboard from './components/CRM/Dashboard/Dashboard';
 import PlaceholderPage from './components/CRM/PlaceholderPage/PlaceholderPage';
 import Clients from './components/CRM/Clients/Clients';
 import Cases from './components/CRM/Cases/Cases';
+import Calendar from './components/CRM/Events/Calendar';
 import Profile from './components/CRM/Profile/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -71,7 +72,7 @@ function App() {
               path="/calendar"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage title="Календарь" description="Календарь событий и встреч" />
+                  <Calendar />
                 </ProtectedRoute>
               }
             />

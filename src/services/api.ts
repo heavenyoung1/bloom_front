@@ -399,4 +399,45 @@ export const casesApi = {
   },
 };
 
+// Интерфейс для события
+export interface Event {
+  id: number;
+  name: string;
+  description: string;
+  event_type: string;
+  event_date: string;
+  case_id: number;
+  attorney_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Интерфейс для создания события
+export interface CreateEventRequest {
+  attorney_id: number;
+  case_id: number;
+  description: string;
+  event_date: string;
+  event_type: string;
+  name: string;
+}
+
+// API для работы с событиями
+export const eventsApi = {
+  // Получение списка событий
+  async getEvents(): Promise<Event[]> {
+    return apiClient.request<Event[]>('/events', 'GET');
+  },
+  
+  // Получение конкретного события
+  async getEvent(eventId: number): Promise<Event> {
+    return apiClient.request<Event>(`/events/${eventId}`, 'GET');
+  },
+  
+  // Создание события
+  async createEvent(data: CreateEventRequest): Promise<Event> {
+    return apiClient.request<Event>('/events', 'POST', data);
+  },
+};
+
 export default apiClient;
