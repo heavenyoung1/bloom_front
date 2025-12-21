@@ -3,12 +3,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(135deg,
-    #e8f4fe 0%,
-    #f2f9ff 30%,
-    #ffffff 70%
-  );
-  background-attachment: fixed;
+  background: #f9fafb;
   padding: 20px;
 }
 

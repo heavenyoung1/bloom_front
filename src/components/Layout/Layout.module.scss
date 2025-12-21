@@ -1,11 +1,6 @@
 .layout {
   min-height: 100vh;
-  background: linear-gradient(135deg,
-    #f8fafc 0%,          /* Very light gray-blue */
-    #f1f5f9 20%,         /* Light gray-blue */
-    #ffffff 60%          /* White */
-  );
-  background-attachment: fixed;
+  background: #f9fafb;
   position: relative;
 }
 

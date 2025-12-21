@@ -32,20 +32,7 @@ body {
   min-width: 320px;
   min-height: 100vh;
   font-family: 'Roboto', system-ui, sans-serif;
-
-  background-image:
-    linear-gradient(
-      rgba(255, 255, 255, 0.55),
-      rgba(255, 255, 255, 0.55)
-    ),
-    url('/src/assets/backgrounds/hero-gradient.png');
-
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
-
-  /* УБРАТЬ fixed — делает фон агрессивнее */
-  background-attachment: scroll;
+  background: #f9fafb;
 }
 
 body::before {

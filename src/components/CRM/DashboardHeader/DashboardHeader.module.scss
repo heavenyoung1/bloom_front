@@ -18,7 +18,7 @@
 .search {
   display: flex;
   align-items: center;
-  background: white;
+  background: #f9fafb;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 10px 16px;
@@ -28,6 +28,7 @@
 
   &:focus-within {
     border-color: #8b5cf6;
+    background: white;
   }
 }
 
