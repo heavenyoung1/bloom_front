@@ -91,6 +91,17 @@ export interface Client {
 // Экспортируем тип для использования в других модулях
 export type { Client as ClientType };
 
+export interface Case {
+  id: number;
+  name: string;
+  client_id: number;
+  attorney_id: number;
+  status: string;
+  description: string;
+  created_at: string;
+  updated_at: string;
+}
+
 // Базовый HTTP клиент
 const apiClient = {
   async request<T>(
@@ -312,6 +323,28 @@ export const clientsApi = {
   // Создание клиента
   async createClient(data: CreateClientRequest): Promise<Client> {
     return apiClient.request<Client>('/clients', 'POST', data);
+  },
+};
+
+// Интерфейс для создания дела
+export interface CreateCaseRequest {
+  attorney_id: number;
+  client_id: number;
+  description: string;
+  name: string;
+  status: string;
+}
+
+// API для работы с делами
+export const casesApi = {
+  // Получение списка дел
+  async getCases(): Promise<Case[]> {
+    return apiClient.request<Case[]>('/cases', 'GET');
+  },
+  
+  // Создание дела
+  async createCase(data: CreateCaseRequest): Promise<Case> {
+    return apiClient.request<Case>('/cases', 'POST', data);
   },
 };
 

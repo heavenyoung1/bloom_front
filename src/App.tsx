@@ -4,6 +4,7 @@ import AuthForm from './components/AuthForm/AuthForm';
 import Dashboard from './components/CRM/Dashboard/Dashboard';
 import PlaceholderPage from './components/CRM/PlaceholderPage/PlaceholderPage';
 import Clients from './components/CRM/Clients/Clients';
+import Cases from './components/CRM/Cases/Cases';
 import Profile from './components/CRM/Profile/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -46,7 +47,7 @@ function App() {
               path="/cases"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage title="Дела" description="Управление делами" />
+                  <Cases />
                 </ProtectedRoute>
               }
             />
