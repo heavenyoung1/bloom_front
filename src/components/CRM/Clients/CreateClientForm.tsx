@@ -233,7 +233,7 @@ const CreateClientForm: React.FC<CreateClientFormProps> = ({ onClose, onSuccess 
             >
               <option value="Telegram">Telegram</option>
               <option value="WhatsApp">WhatsApp</option>
-              <option value="Viber">Viber</option>
+              <option value="MAX">MAX</option>
             </select>
             {errors.messenger && (
               <span className={styles.errorText}>{errors.messenger}</span>

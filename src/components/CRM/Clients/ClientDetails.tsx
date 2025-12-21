@@ -165,8 +165,8 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ clientId, onClose, onUpda
         return '✈️';
       case 'whatsapp':
         return '💬';
-      case 'viber':
-        return '💜';
+      case 'max':
+        return '📱';
       default:
         return '📱';
     }
@@ -313,7 +313,7 @@ const ClientDetails: React.FC<ClientDetailsProps> = ({ clientId, onClose, onUpda
                 >
                   <option value="Telegram">Telegram</option>
                   <option value="WhatsApp">WhatsApp</option>
-                  <option value="Viber">Viber</option>
+                  <option value="MAX">MAX</option>
                 </select>
                 {formErrors.messenger && (
                   <span className={styles.errorText}>{formErrors.messenger}</span>
