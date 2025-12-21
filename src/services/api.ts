@@ -29,6 +29,9 @@ export interface AuthResponse {
       first_name: string;
       last_name: string;
       license_id: string;
+      patronymic?: string;
+      phone?: string;
+      telegram_username?: string;
     };
     token: string;
     expires_in: number;
@@ -299,7 +302,23 @@ export const authApi = {
   async resendVerificationCode(data: ResendCodeRequest): Promise<ResendCodeResponse> {
     return apiClient.request<ResendCodeResponse>('/auth/resend-verification-code', 'POST', data);
   },
+
+  // Обновление профиля
+  async updateProfile(data: UpdateProfileRequest): Promise<AuthResponse> {
+    return apiClient.request<AuthResponse>('/me', 'PATCH', data);
+  },
 };
+
+// Интерфейс для обновления профиля
+export interface UpdateProfileRequest {
+  email?: string;
+  first_name?: string;
+  last_name?: string;
+  license_id?: string;
+  patronymic?: string;
+  phone?: string;
+  telegram_username?: string;
+}
 
 // Интерфейс для создания клиента
 export interface CreateClientRequest {

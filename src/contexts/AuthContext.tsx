@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import type { ReactNode } from 'react';
 import { authApi } from '../services/api';
-import type { AuthResponse, VerifyEmailResponse, ResendCodeResponse } from '../services/api';
+import type { AuthResponse, VerifyEmailResponse, ResendCodeResponse, UpdateProfileRequest } from '../services/api';
 
 interface User {
   id: number;
@@ -9,6 +9,9 @@ interface User {
   first_name: string;
   last_name: string;
   license_id: string;
+  patronymic?: string;
+  phone?: string;
+  telegram_username?: string;
 }
 
 interface AuthContextType {
@@ -22,6 +25,7 @@ interface AuthContextType {
   checkAuth: () => Promise<void>;
   verifyEmail: (email: string, code: string) => Promise<VerifyEmailResponse>;
   resendVerificationCode: (email: string) => Promise<ResendCodeResponse>;
+  updateProfile: (data: UpdateProfileRequest) => Promise<AuthResponse>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -61,12 +65,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('User data updated from /me:', response.data.user);
       } else if ((response as any).id || (response as any).email) {
         // Прямой объект пользователя
-        const userData = {
+        const userData: User = {
           id: (response as any).id || 0,
           email: (response as any).email || '',
           first_name: (response as any).first_name || (response as any).firstname || '',
           last_name: (response as any).last_name || (response as any).lastname || '',
           license_id: (response as any).license_id || (response as any).licenseId || '',
+          patronymic: (response as any).patronymic || undefined,
+          phone: (response as any).phone || undefined,
+          telegram_username: (response as any).telegram_username || undefined,
         };
         setUser(userData);
         console.log('User data updated from /me (direct format):', userData);
@@ -146,6 +153,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
               first_name: loginData.first_name || loginData.user?.first_name || '',
               last_name: loginData.last_name || loginData.user?.last_name || '',
               license_id: loginData.license_id || loginData.user?.license_id || '',
+              patronymic: loginData.patronymic || loginData.user?.patronymic || undefined,
+              phone: loginData.phone || loginData.user?.phone || undefined,
+              telegram_username: loginData.telegram_username || loginData.user?.telegram_username || undefined,
             };
             setUser(userData);
             console.log('User saved after login (constructed):', userData); // Для отладки
@@ -280,6 +290,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             first_name: responseData.user.first_name || responseData.first_name || '',
             last_name: responseData.user.last_name || responseData.last_name || '',
             license_id: responseData.user.license_id || responseData.license_id || '',
+            patronymic: responseData.user.patronymic || responseData.patronymic || undefined,
+            phone: responseData.user.phone || responseData.phone || undefined,
+            telegram_username: responseData.user.telegram_username || responseData.telegram_username || undefined,
           };
         } else if (responseData.id && responseData.email) {
           // Прямой объект пользователя (как при регистрации)
@@ -289,6 +302,9 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             first_name: responseData.first_name || '',
             last_name: responseData.last_name || '',
             license_id: responseData.license_id || '',
+            patronymic: responseData.patronymic || undefined,
+            phone: responseData.phone || undefined,
+            telegram_username: responseData.telegram_username || undefined,
           };
         }
       }
@@ -342,6 +358,26 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  // Обновление профиля
+  const updateProfile = async (data: UpdateProfileRequest): Promise<AuthResponse> => {
+    try {
+      const response = await authApi.updateProfile(data);
+      
+      // Обновляем данные пользователя после успешного обновления
+      if (response.success && response.data) {
+        setUser(response.data.user);
+      } else {
+        // Если формат ответа другой, обновляем через checkAuth
+        await checkAuth();
+      }
+      
+      return response;
+    } catch (error) {
+      console.error('Update profile failed:', error);
+      throw error;
+    }
+  };
+
   const isAuthenticated = !!user && !!token;
   
   // Логируем изменения состояния для отладки
@@ -360,6 +396,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     checkAuth,
     verifyEmail,
     resendVerificationCode,
+    updateProfile,
   };
 
   return (
