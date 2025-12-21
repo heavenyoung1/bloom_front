@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import styles from './Sidebar.module.scss';
@@ -22,10 +22,37 @@ const navItems: NavItem[] = [
 const Sidebar: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const profileRef = useRef<HTMLDivElement>(null);
 
   const activeItem = navItems.find(item => location.pathname === item.path) || navItems[0];
+
+  // Закрываем выпадающее меню при клике вне его
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (profileRef.current && !profileRef.current.contains(event.target as Node)) {
+        setIsProfileOpen(false);
+      }
+    };
+
+    if (isProfileOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, [isProfileOpen]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+      navigate('/login', { replace: true });
+    } catch (error) {
+      console.error('Logout error:', error);
+    }
+  };
 
   return (
     <div className={styles.sidebar}>
@@ -79,7 +106,7 @@ const Sidebar: React.FC = () => {
         </div>
 
         {/* Профиль пользователя */}
-        <div className={styles.profile}>
+        <div className={styles.profile} ref={profileRef}>
           <div className={styles.profileInfo}>
             <div className={styles.profileAvatar}>
               {user?.first_name?.[0] || 'U'}
@@ -95,8 +122,21 @@ const Sidebar: React.FC = () => {
             className={styles.profileDropdown}
             onClick={() => setIsProfileOpen(!isProfileOpen)}
           >
-            ▼
+            {isProfileOpen ? '▲' : '▼'}
           </button>
+          
+          {/* Выпадающее меню */}
+          {isProfileOpen && (
+            <div className={styles.profileMenu}>
+              <button
+                className={styles.profileMenuItem}
+                onClick={handleLogout}
+              >
+                <span className={styles.menuIcon}>🚪</span>
+                <span>Выйти</span>
+              </button>
+            </div>
+          )}
         </div>
       </div>
     </div>

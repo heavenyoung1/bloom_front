@@ -166,6 +166,7 @@
 }
 
 .profile {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -222,5 +223,46 @@
   &:hover {
     color: #1f2937;
   }
+}
+
+.profileMenu {
+  position: absolute;
+  bottom: 100%;
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  margin-bottom: 8px;
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.profileMenuItem {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 16px;
+  border: none;
+  background: transparent;
+  text-align: left;
+  font-size: 14px;
+  color: #1f2937;
+  cursor: pointer;
+  transition: background 0.2s;
+
+  &:hover {
+    background: #f3f4f6;
+  }
+
+  &:active {
+    background: #e5e7eb;
+  }
+}
+
+.menuIcon {
+  font-size: 16px;
 }
 
