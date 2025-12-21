@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { casesApi, clientsApi } from '../../../services/api';
 import type { Case, Client, UpdateCaseRequest } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
+import { getStatusColor, CASE_STATUSES } from '../../../types/caseStatus';
 import styles from './CaseDetails.module.scss';
 
 interface CaseDetailsProps {
@@ -24,7 +25,7 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({ caseId, onClose, onUpdate, on
   const [formData, setFormData] = useState<UpdateCaseRequest>({
     name: '',
     description: '',
-    status: 'Новое',
+    status: '',
     client_id: 0,
   });
   
@@ -167,7 +168,7 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({ caseId, onClose, onUpdate, on
     setIsArchiving(true);
     try {
       await casesApi.updateCase(caseId, {
-        status: 'Архив',
+        status: 'Архивировано',
       });
       loadCaseData();
       onUpdate();
@@ -191,22 +192,6 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({ caseId, onClose, onUpdate, on
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Новое':
-        return '#3b82f6';
-      case 'В работе':
-        return '#f59e0b';
-      case 'Завершено':
-        return '#10b981';
-      case 'Отменено':
-        return '#ef4444';
-      case 'Архив':
-        return '#6b7280';
-      default:
-        return '#6b7280';
-    }
-  };
 
   if (loading) {
     return (
@@ -320,11 +305,11 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({ caseId, onClose, onUpdate, on
                   onChange={handleInputChange}
                   className={styles.select}
                 >
-                  <option value="Новое">Новое</option>
-                  <option value="В работе">В работе</option>
-                  <option value="Завершено">Завершено</option>
-                  <option value="Отменено">Отменено</option>
-                  <option value="Архив">Архив</option>
+                  {CASE_STATUSES.map((status) => (
+                    <option key={status} value={status}>
+                      {status}
+                    </option>
+                  ))}
                 </select>
               </div>
 
@@ -402,7 +387,7 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({ caseId, onClose, onUpdate, on
                 <button
                   onClick={handleArchive}
                   className={styles.archiveButton}
-                  disabled={isArchiving || caseData.status === 'Архив'}
+                  disabled={isArchiving || caseData.status === 'Архивировано'}
                 >
                   {isArchiving ? 'Архивирование...' : 'В архив'}
                 </button>

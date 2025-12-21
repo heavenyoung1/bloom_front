@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { casesApi, clientsApi } from '../../../services/api';
 import type { CreateCaseRequest, Client } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
+import { CaseStatus, CASE_STATUSES } from '../../../types/caseStatus';
 import CreateClientForm from '../Clients/CreateClientForm';
 import styles from './CreateCaseForm.module.scss';
 
@@ -28,7 +29,7 @@ const CreateCaseForm: React.FC<CreateCaseFormProps> = ({ onClose, onSuccess }) =
     client_id: 0,
     description: '',
     name: '',
-    status: 'Новое',
+    status: CaseStatus.NEW,
   });
 
   const [errors, setErrors] = useState<FormErrors>({});
@@ -263,10 +264,11 @@ const CreateCaseForm: React.FC<CreateCaseFormProps> = ({ onClose, onSuccess }) =
               onChange={handleInputChange}
               className={styles.select}
             >
-              <option value="Новое">Новое</option>
-              <option value="В работе">В работе</option>
-              <option value="Завершено">Завершено</option>
-              <option value="Отменено">Отменено</option>
+              {CASE_STATUSES.map((status) => (
+                <option key={status} value={status}>
+                  {status}
+                </option>
+              ))}
             </select>
           </div>
 

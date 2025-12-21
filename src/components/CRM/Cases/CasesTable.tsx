@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { casesApi } from '../../../services/api';
 import type { Case } from '../../../services/api';
+import { getStatusColor } from '../../../types/caseStatus';
 import CreateCaseForm from './CreateCaseForm';
 import CaseDetails from './CaseDetails';
 import styles from './CasesTable.module.scss';
@@ -52,20 +53,6 @@ const CasesTable: React.FC = () => {
     });
   };
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case 'Новое':
-        return '#3b82f6'; // синий
-      case 'В работе':
-        return '#f59e0b'; // оранжевый
-      case 'Завершено':
-        return '#10b981'; // зеленый
-      case 'Отменено':
-        return '#ef4444'; // красный
-      default:
-        return '#6b7280'; // серый
-    }
-  };
 
   if (loading) {
     return (
