@@ -8,18 +8,30 @@ interface NavItem {
   label: string;
   icon: string;
   path: string;
+  isDivider?: boolean;
 }
 
 const navItems: NavItem[] = [
-  { id: 'dashboard', label: 'Dashboard', icon: '📊', path: '/dashboard' },
-  { id: 'product', label: 'Product', icon: '📦', path: '/product' },
-  { id: 'customers', label: 'Customers', icon: '👥', path: '/customers' },
-  { id: 'income', label: 'Income', icon: '💰', path: '/income' },
-  { id: 'promote', label: 'Promote', icon: '📢', path: '/promote' },
-  { id: 'help', label: 'Help', icon: '❓', path: '/help' },
+  { id: 'dashboard', label: 'Дашборд', icon: '📊', path: '/dashboard' },
+  { id: 'cases', label: 'Дела', icon: '📁', path: '/cases' },
+  { id: 'clients', label: 'Клиенты', icon: '👥', path: '/clients' },
+  { id: 'contacts', label: 'Контакты', icon: '📇', path: '/contacts' },
+  { id: 'calendar', label: 'Календарь', icon: '📅', path: '/calendar' },
+  { id: 'payments', label: 'Платежи', icon: '💳', path: '/payments' },
+  { id: 'assistant', label: 'Универсальный помощник юриста', icon: '🤖', path: '/assistant' },
+  { id: 'divider1', label: '', icon: '', path: '', isDivider: true },
+  { id: 'help', label: 'Поддержка', icon: '❓', path: '/help' },
+  { id: 'settings', label: 'Настройки', icon: '⚙️', path: '/settings' },
+  { id: 'divider2', label: '', icon: '', path: '', isDivider: true },
+  { id: 'profile', label: 'Личный кабинет', icon: '👤', path: '/profile' },
 ];
 
-const Sidebar: React.FC = () => {
+interface SidebarProps {
+  isCollapsed?: boolean;
+  onToggle?: () => void;
+}
+
+const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
   const navigate = useNavigate();
   const location = useLocation();
   const { user, logout } = useAuth();
@@ -55,89 +67,101 @@ const Sidebar: React.FC = () => {
   };
 
   return (
-    <div className={styles.sidebar}>
+    <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
       {/* Темная секция с иконками */}
       <div className={styles.iconBar}>
         <div className={styles.logo}>⚡</div>
-        {navItems.map((item) => (
-          <button
-            key={item.id}
-            className={`${styles.iconButton} ${activeItem.id === item.id ? styles.active : ''}`}
-            onClick={() => navigate(item.path)}
-            title={item.label}
-          >
-            {item.icon}
-          </button>
-        ))}
+        {navItems
+          .filter(item => !item.isDivider)
+          .map((item) => (
+            <button
+              key={item.id}
+              className={`${styles.iconButton} ${activeItem.id === item.id ? styles.active : ''}`}
+              onClick={() => navigate(item.path)}
+              title={item.label}
+            >
+              {item.icon}
+            </button>
+          ))}
+        {/* Кнопка сворачивания */}
+        <button
+          className={styles.toggleButton}
+          onClick={onToggle}
+          title={isCollapsed ? 'Развернуть меню' : 'Свернуть меню'}
+        >
+          {isCollapsed ? '→' : '←'}
+        </button>
       </div>
 
       {/* Белая панель с навигацией */}
-      <div className={styles.navPanel}>
+      <div className={`${styles.navPanel} ${isCollapsed ? styles.collapsed : ''}`}>
         <div className={styles.navHeader}>
           <h2>Dashboard v.01</h2>
         </div>
 
         <nav className={styles.nav}>
-          {navItems.map((item) => (
-            <button
-              key={item.id}
-              className={`${styles.navItem} ${activeItem.id === item.id ? styles.active : ''}`}
-              onClick={() => navigate(item.path)}
-            >
-              <span className={styles.navIcon}>{item.icon}</span>
-              <span className={styles.navLabel}>{item.label}</span>
-              {activeItem.id === item.id && (
-                <span className={styles.navArrow}>→</span>
-              )}
-            </button>
-          ))}
+          {navItems.map((item) => {
+            if (item.isDivider) {
+              return !isCollapsed ? (
+                <div key={item.id} className={styles.divider} />
+              ) : null;
+            }
+            return (
+              <button
+                key={item.id}
+                className={`${styles.navItem} ${activeItem.id === item.id ? styles.active : ''}`}
+                onClick={() => navigate(item.path)}
+                title={isCollapsed ? item.label : undefined}
+              >
+                <span className={styles.navIcon}>{item.icon}</span>
+                {!isCollapsed && (
+                  <>
+                    <span className={styles.navLabel}>{item.label}</span>
+                    {activeItem.id === item.id && (
+                      <span className={styles.navArrow}>→</span>
+                    )}
+                  </>
+                )}
+              </button>
+            );
+          })}
         </nav>
 
-        {/* PRO Upgrade Box */}
-        <div className={styles.upgradeBox}>
-          <div className={styles.upgradeContent}>
-            <p className={styles.upgradeText}>
-              Upgrade to PRO to get access all Features!
-            </p>
-            <button className={styles.upgradeButton}>
-              Get Pro Now!
-            </button>
-          </div>
-        </div>
-
-        {/* Профиль пользователя */}
-        <div className={styles.profile} ref={profileRef}>
-          <div className={styles.profileInfo}>
-            <div className={styles.profileAvatar}>
-              {user?.first_name?.[0] || 'U'}
-            </div>
-            <div className={styles.profileDetails}>
-              <div className={styles.profileName}>
-                {user?.first_name || 'User'} {user?.last_name || ''}
+        {/* Профиль пользователя - только если выбран раздел Личный кабинет */}
+        {activeItem.id === 'profile' && !isCollapsed && (
+          <div className={styles.profile} ref={profileRef}>
+            <div className={styles.profileInfo}>
+              <div className={styles.profileAvatar}>
+                {user?.first_name?.[0] || 'U'}
               </div>
-              <div className={styles.profileRole}>Project Manager</div>
+              <div className={styles.profileDetails}>
+                <div className={styles.profileName}>
+                  {user?.first_name || 'User'} {user?.last_name || ''}
+                </div>
+                <div className={styles.profileRole}>Юрист</div>
+              </div>
             </div>
+            <button
+              className={styles.profileDropdown}
+              onClick={() => setIsProfileOpen(!isProfileOpen)}
+            >
+              {isProfileOpen ? '▲' : '▼'}
+            </button>
+            
+            {/* Выпадающее меню */}
+            {isProfileOpen && (
+              <div className={styles.profileMenu}>
+                <button
+                  className={styles.profileMenuItem}
+                  onClick={handleLogout}
+                >
+                  <span className={styles.menuIcon}>🚪</span>
+                  <span>Выйти</span>
+                </button>
+              </div>
+            )}
           </div>
-          <button
-            className={styles.profileDropdown}
-            onClick={() => setIsProfileOpen(!isProfileOpen)}
-          >
-            {isProfileOpen ? '▲' : '▼'}
-          </button>
-          
-          {/* Выпадающее меню */}
-          {isProfileOpen && (
-            <div className={styles.profileMenu}>
-              <button
-                className={styles.profileMenuItem}
-                onClick={handleLogout}
-              >
-                <span className={styles.menuIcon}>🚪</span>
-                <span>Выйти</span>
-              </button>
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </div>
   );

@@ -11,6 +11,11 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  transition: margin-left 0.3s ease-in-out;
+
+  &.sidebarCollapsed {
+    margin-left: 60px;
+  }
 }
 
 .container {

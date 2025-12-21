@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import AuthForm from './components/AuthForm/AuthForm';
 import Dashboard from './components/CRM/Dashboard/Dashboard';
 import PlaceholderPage from './components/CRM/PlaceholderPage/PlaceholderPage';
+import Profile from './components/CRM/Profile/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import './App.css';
@@ -41,34 +42,50 @@ function App() {
               }
             />
             <Route
-              path="/product"
+              path="/cases"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage title="Product" description="Управление продуктами" />
+                  <PlaceholderPage title="Дела" description="Управление делами" />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/customers"
+              path="/clients"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage title="Customers" description="Управление клиентами" />
+                  <PlaceholderPage title="Клиенты" description="Управление клиентами" />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/income"
+              path="/contacts"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage title="Income" description="Аналитика доходов" />
+                  <PlaceholderPage title="Контакты" description="Управление контактами" />
                 </ProtectedRoute>
               }
             />
             <Route
-              path="/promote"
+              path="/calendar"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage title="Promote" description="Маркетинг и продвижение" />
+                  <PlaceholderPage title="Календарь" description="Календарь событий и встреч" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/payments"
+              element={
+                <ProtectedRoute>
+                  <PlaceholderPage title="Платежи" description="Управление платежами" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/assistant"
+              element={
+                <ProtectedRoute>
+                  <PlaceholderPage title="Универсальный помощник юриста" description="Искусственный интеллект для помощи в работе" />
                 </ProtectedRoute>
               }
             />
@@ -76,7 +93,23 @@ function App() {
               path="/help"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage title="Help" description="Центр помощи и поддержки" />
+                  <PlaceholderPage title="Поддержка" description="Центр помощи и поддержки" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/settings"
+              element={
+                <ProtectedRoute>
+                  <PlaceholderPage title="Настройки" description="Настройки системы" />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/profile"
+              element={
+                <ProtectedRoute>
+                  <Profile />
                 </ProtectedRoute>
               }
             />

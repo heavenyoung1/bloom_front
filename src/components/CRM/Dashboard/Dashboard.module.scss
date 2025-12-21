@@ -9,6 +9,11 @@
   margin-left: 310px;
   padding: 30px;
   overflow-x: hidden;
+  transition: margin-left 0.3s ease-in-out;
+
+  &.sidebarCollapsed {
+    margin-left: 60px;
+  }
 }
 
 .metrics {
