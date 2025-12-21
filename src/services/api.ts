@@ -422,11 +422,26 @@ export interface CreateEventRequest {
   name: string;
 }
 
+// Интерфейс для обновления события
+export interface UpdateEventRequest {
+  attorney_id?: number;
+  case_id?: number;
+  description?: string;
+  event_date?: string;
+  event_type?: string;
+  name?: string;
+}
+
 // API для работы с событиями
 export const eventsApi = {
   // Получение списка событий
   async getEvents(): Promise<Event[]> {
     return apiClient.request<Event[]>('/events', 'GET');
+  },
+  
+  // Получение событий для конкретного адвоката
+  async getEventsByAttorney(attorneyId: number): Promise<Event[]> {
+    return apiClient.request<Event[]>(`/events/attorney/${attorneyId}`, 'GET');
   },
   
   // Получение конкретного события
@@ -437,6 +452,16 @@ export const eventsApi = {
   // Создание события
   async createEvent(data: CreateEventRequest): Promise<Event> {
     return apiClient.request<Event>('/events', 'POST', data);
+  },
+  
+  // Обновление события
+  async updateEvent(eventId: number, data: UpdateEventRequest): Promise<Event> {
+    return apiClient.request<Event>(`/events/${eventId}`, 'PUT', data);
+  },
+  
+  // Удаление события
+  async deleteEvent(eventId: number): Promise<{ success: boolean; message?: string }> {
+    return apiClient.request<{ success: boolean; message?: string }>(`/events/${eventId}`, 'DELETE');
   },
 };
 

@@ -28,7 +28,7 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ onClose, onSuccess })
     case_id: 0,
     description: '',
     event_date: '',
-    event_type: 'meeting',
+    event_type: 'Встреча',
     name: '',
   });
 
@@ -233,12 +233,12 @@ const CreateEventForm: React.FC<CreateEventFormProps> = ({ onClose, onSuccess })
               onChange={handleInputChange}
               className={`${styles.select} ${errors.event_type ? styles.inputError : ''}`}
             >
-              <option value="meeting">Встреча</option>
-              <option value="task">Задача</option>
-              <option value="court_hearing">Судебное заседание</option>
-              <option value="deadline">Дедлайн</option>
-              <option value="important">Важное</option>
-              <option value="other">Другое</option>
+              <option value="Встреча">Встреча</option>
+              <option value="Задача">Задача</option>
+              <option value="Судебное заседание">Судебное заседание</option>
+              <option value="Дедлайн">Дедлайн</option>
+              <option value="Важное">Важное</option>
+              <option value="Другое">Другое</option>
             </select>
             {errors.event_type && (
               <span className={styles.errorText}>{errors.event_type}</span>
