@@ -313,6 +313,18 @@ export interface CreateClientRequest {
   messenger_handle: string;
 }
 
+// Интерфейс для обновления клиента
+export interface UpdateClientRequest {
+  name?: string;
+  type?: boolean;
+  email?: string;
+  phone?: string;
+  personal_info?: string;
+  address?: string;
+  messenger?: string;
+  messenger_handle?: string;
+}
+
 // API для работы с клиентами
 export const clientsApi = {
   // Получение списка клиентов
@@ -320,9 +332,24 @@ export const clientsApi = {
     return apiClient.request<Client[]>('/clients', 'GET');
   },
   
+  // Получение конкретного клиента
+  async getClient(clientId: number): Promise<Client> {
+    return apiClient.request<Client>(`/clients/${clientId}`, 'GET');
+  },
+  
   // Создание клиента
   async createClient(data: CreateClientRequest): Promise<Client> {
     return apiClient.request<Client>('/clients', 'POST', data);
+  },
+  
+  // Обновление клиента
+  async updateClient(clientId: number, data: UpdateClientRequest): Promise<Client> {
+    return apiClient.request<Client>(`/clients/${clientId}`, 'PUT', data);
+  },
+  
+  // Удаление клиента
+  async deleteClient(clientId: number): Promise<{ success: boolean; message?: string }> {
+    return apiClient.request<{ success: boolean; message?: string }>(`/clients/${clientId}`, 'DELETE');
   },
 };
 
@@ -335,6 +362,15 @@ export interface CreateCaseRequest {
   status: string;
 }
 
+// Интерфейс для обновления дела
+export interface UpdateCaseRequest {
+  attorney_id?: number;
+  client_id?: number;
+  description?: string;
+  name?: string;
+  status?: string;
+}
+
 // API для работы с делами
 export const casesApi = {
   // Получение списка дел
@@ -342,9 +378,24 @@ export const casesApi = {
     return apiClient.request<Case[]>('/cases', 'GET');
   },
   
+  // Получение конкретного дела
+  async getCase(caseId: number): Promise<Case> {
+    return apiClient.request<Case>(`/cases/${caseId}`, 'GET');
+  },
+  
   // Создание дела
   async createCase(data: CreateCaseRequest): Promise<Case> {
     return apiClient.request<Case>('/cases', 'POST', data);
+  },
+  
+  // Обновление дела
+  async updateCase(caseId: number, data: UpdateCaseRequest): Promise<Case> {
+    return apiClient.request<Case>(`/cases/${caseId}`, 'PUT', data);
+  },
+  
+  // Удаление дела
+  async deleteCase(caseId: number): Promise<{ success: boolean; message?: string }> {
+    return apiClient.request<{ success: boolean; message?: string }>(`/cases/${caseId}`, 'DELETE');
   },
 };
 

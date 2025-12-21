@@ -130,6 +130,14 @@
       }
     }
 
+    .tableRow {
+      cursor: pointer;
+      
+      &:hover {
+        background: #f3f4f6;
+      }
+    }
+
     td {
       padding: 16px;
       font-size: 14px;

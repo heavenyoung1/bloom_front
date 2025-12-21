@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { casesApi } from '../../../services/api';
 import type { Case } from '../../../services/api';
 import CreateCaseForm from './CreateCaseForm';
+import CaseDetails from './CaseDetails';
 import styles from './CasesTable.module.scss';
 
 const CasesTable: React.FC = () => {
@@ -11,6 +12,7 @@ const CasesTable: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedCaseId, setSelectedCaseId] = useState<number | null>(null);
   const itemsPerPage = 8;
 
   const fetchCases = async () => {
@@ -128,7 +130,11 @@ const CasesTable: React.FC = () => {
               </thead>
               <tbody>
                 {displayedCases.map((caseItem) => (
-                  <tr key={caseItem.id}>
+                  <tr 
+                    key={caseItem.id}
+                    onClick={() => setSelectedCaseId(caseItem.id)}
+                    className={styles.tableRow}
+                  >
                     <td className={styles.nameCell}>{caseItem.name}</td>
                     <td>
                       <span
@@ -212,6 +218,20 @@ const CasesTable: React.FC = () => {
           onSuccess={() => {
             fetchCases();
             setShowCreateForm(false);
+          }}
+        />
+      )}
+
+      {selectedCaseId && (
+        <CaseDetails
+          caseId={selectedCaseId}
+          onClose={() => setSelectedCaseId(null)}
+          onUpdate={() => {
+            fetchCases();
+          }}
+          onDelete={() => {
+            fetchCases();
+            setSelectedCaseId(null);
           }}
         />
       )}

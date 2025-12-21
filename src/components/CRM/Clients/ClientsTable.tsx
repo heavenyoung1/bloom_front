@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { clientsApi } from '../../../services/api';
 import type { Client } from '../../../services/api';
 import CreateClientForm from './CreateClientForm';
+import ClientDetails from './ClientDetails';
 import styles from './ClientsTable.module.scss';
 
 const ClientsTable: React.FC = () => {
@@ -11,6 +12,7 @@ const ClientsTable: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
   const itemsPerPage = 8;
 
   const fetchClients = async () => {
@@ -120,7 +122,11 @@ const ClientsTable: React.FC = () => {
               </thead>
               <tbody>
                 {displayedClients.map((client) => (
-                  <tr key={client.id}>
+                  <tr 
+                    key={client.id}
+                    onClick={() => setSelectedClientId(client.id)}
+                    className={styles.tableRow}
+                  >
                     <td className={styles.nameCell}>{client.name}</td>
                     <td>{client.email}</td>
                     <td>{client.phone}</td>
@@ -209,6 +215,20 @@ const ClientsTable: React.FC = () => {
           onSuccess={() => {
             fetchClients();
             setShowCreateForm(false);
+          }}
+        />
+      )}
+
+      {selectedClientId && (
+        <ClientDetails
+          clientId={selectedClientId}
+          onClose={() => setSelectedClientId(null)}
+          onUpdate={() => {
+            fetchClients();
+          }}
+          onDelete={() => {
+            fetchClients();
+            setSelectedClientId(null);
           }}
         />
       )}
