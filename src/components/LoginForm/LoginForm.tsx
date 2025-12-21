@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import styles from './LoginForm.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
@@ -20,7 +20,7 @@ interface LoginFormErrors {
 
 const LoginForm: React.FC = () => {
   // Хук аутентификации
-  const { login, isLoading: authLoading } = useAuth();
+  const { login, isLoading: authLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
   // Состояние формы
@@ -40,6 +40,20 @@ const LoginForm: React.FC = () => {
 
   // Комбинированное состояние загрузки
   const isActuallySubmitting = isSubmitting || authLoading;
+
+  // Отслеживаем изменения isAuthenticated для автоматической навигации
+  useEffect(() => {
+    console.log('LoginForm useEffect - isAuthenticated:', isAuthenticated, 'isActuallySubmitting:', isActuallySubmitting, 'authLoading:', authLoading);
+    if (isAuthenticated) {
+      console.log('User authenticated, navigating to dashboard');
+      // Используем небольшую задержку для гарантии, что состояние обновилось
+      const timer = setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, navigate]);
 
   // Обработчик изменения полей
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -102,10 +116,10 @@ const LoginForm: React.FC = () => {
                         ((response as any).token && (response as any).email);
       
       if (isSuccess) {
-        console.log('Login successful, navigating to dashboard'); // Для отладки
-        // Сразу навигируем, не показывая сообщение об успехе
-        // чтобы избежать проблем с состоянием
-        navigate('/dashboard');
+        console.log('Login successful, waiting for authentication state update'); // Для отладки
+        // Не навигируем сразу - useEffect отследит изменение isAuthenticated
+        // и выполнит навигацию автоматически
+        // Это гарантирует, что состояние обновилось перед навигацией
         
       } else {
         // Обрабатываем ошибки от сервера

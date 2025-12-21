@@ -48,11 +48,30 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const checkAuth = async () => {
     try {
       const response = await authApi.me();
+      console.log('checkAuth response:', response); // Для отладки
+      
+      // Обрабатываем разные форматы ответа
       if (response.success && response.data) {
+        // Стандартный формат
         setUser(response.data.user);
-        setToken(response.data.token);
-        localStorage.setItem('token', response.data.token);
+        if (response.data.token) {
+          setToken(response.data.token);
+          localStorage.setItem('token', response.data.token);
+        }
+        console.log('User data updated from /me:', response.data.user);
+      } else if ((response as any).id || (response as any).email) {
+        // Прямой объект пользователя
+        const userData = {
+          id: (response as any).id || 0,
+          email: (response as any).email || '',
+          first_name: (response as any).first_name || (response as any).firstname || '',
+          last_name: (response as any).last_name || (response as any).lastname || '',
+          license_id: (response as any).license_id || (response as any).licenseId || '',
+        };
+        setUser(userData);
+        console.log('User data updated from /me (direct format):', userData);
       } else {
+        console.warn('Unexpected /me response format:', response);
         // Токен невалидный - только если пользователь еще не установлен
         // Если пользователь уже установлен, не удаляем его (может быть проблема с эндпоинтом)
         if (!user) {
@@ -66,9 +85,15 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Удаляем токен только если это не 404 или если пользователь не установлен
       // 404 может означать проблему с эндпоинтом, а не с токеном
       if (error.status !== 404 || !user) {
-        localStorage.removeItem('token');
-        setToken(null);
-        setUser(null);
+        // Не удаляем токен и пользователя, если это временный пользователь
+        // (значит, токен валидный, просто /me не работает как ожидалось)
+        if (!user || user.id !== 0) {
+          localStorage.removeItem('token');
+          setToken(null);
+          setUser(null);
+        } else {
+          console.warn('Keeping temporary user despite /me error');
+        }
       } else {
         // Если есть пользователь, но /me возвращает 404, возможно проблема с эндпоинтом
         // Не удаляем пользователя и токен, так как они могут быть валидными
@@ -83,6 +108,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const login = async (email: string, password: string): Promise<AuthResponse> => {
     setIsLoading(true);
     try {
+      console.log('Login started for:', email);
       const response = await authApi.login({ email, password });
       
       console.log('Login response:', response); // Для отладки
@@ -105,13 +131,16 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
           localStorage.setItem('token', accessToken);
           console.log('Token saved after login (token format)'); // Для отладки
           
+          let userData: User | null = null;
+          
           // Если есть информация о пользователе, устанавливаем её
           if (loginData.user) {
-            setUser(loginData.user);
-            console.log('User saved after login (from user field):', loginData.user); // Для отладки
+            userData = loginData.user;
+            setUser(userData);
+            console.log('User saved after login (from user field):', userData); // Для отладки
           } else if (loginData.email || loginData.id) {
             // Если есть только email или id, создаем минимальный объект пользователя
-            const userData = {
+            userData = {
               id: loginData.id || loginData.user?.id || 0,
               email: loginData.email || loginData.user?.email || '',
               first_name: loginData.first_name || loginData.user?.first_name || '',
@@ -120,18 +149,40 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             };
             setUser(userData);
             console.log('User saved after login (constructed):', userData); // Для отладки
+          } else {
+            // Если нет данных пользователя в ответе, пытаемся получить их через /me
+            // Но сначала создаем временного пользователя на основе email, чтобы isAuthenticated стал true
+            const tempUser: User = {
+              id: 0,
+              email: email, // email из параметра функции login
+              first_name: '',
+              last_name: '',
+              license_id: '',
+            };
+            setUser(tempUser);
+            userData = tempUser;
+            console.log('Temporary user created, fetching full user data via /me endpoint...');
+            
+            // Асинхронно получаем полные данные пользователя
+            // Не ждём завершения, чтобы не блокировать навигацию
+            checkAuth().then(() => {
+              console.log('User data fetched successfully from /me');
+            }).catch((error) => {
+              console.warn('Failed to fetch user data via /me:', error);
+              // Оставляем временного пользователя - токен валидный, просто /me не вернул данные
+            });
           }
           
           // Возвращаем успешный ответ
           return {
             success: true,
             data: {
-              user: {
-                id: loginData.id || loginData.user?.id || 0,
-                email: loginData.email || loginData.user?.email || '',
-                first_name: loginData.first_name || loginData.user?.first_name || '',
-                last_name: loginData.last_name || loginData.user?.last_name || '',
-                license_id: loginData.license_id || loginData.user?.license_id || '',
+              user: userData || {
+                id: 0,
+                email: email,
+                first_name: '',
+                last_name: '',
+                license_id: '',
               },
               token: accessToken,
               expires_in: loginData.expires_in || 3600,
@@ -147,7 +198,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       console.error('Login failed:', error);
       throw error;
     } finally {
-      setIsLoading(false);
+      // Не устанавливаем isLoading в false сразу после логина,
+      // так как может быть асинхронный вызов checkAuth()
+      // setIsLoading(false) будет вызван в checkAuth() или через небольшую задержку
+      setTimeout(() => {
+        setIsLoading(false);
+      }, 500);
     }
   };
 
@@ -286,10 +342,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     }
   };
 
+  const isAuthenticated = !!user && !!token;
+  
+  // Логируем изменения состояния для отладки
+  useEffect(() => {
+    console.log('AuthContext state changed - user:', user, 'token:', token ? 'present' : 'missing', 'isAuthenticated:', isAuthenticated);
+  }, [user, token, isAuthenticated]);
+
   const value: AuthContextType = {
     user,
     token,
-    isAuthenticated: !!user && !!token,
+    isAuthenticated,
     isLoading,
     login,
     register,

@@ -472,3 +472,4 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
 
 export default ForgotPasswordForm;
 
+
