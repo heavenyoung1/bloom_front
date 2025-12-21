@@ -1,7 +1,7 @@
 .card {
   background: white;
   border-radius: 12px;
-  padding: 24px;
+  padding: 29px;
   transition: transform 0.2s, box-shadow 0.2s;
 
   &:hover {
@@ -13,13 +13,13 @@
 .header {
   display: flex;
   align-items: flex-start;
-  gap: 16px;
+  gap: 19px;
 }
 
 .icon {
-  font-size: 24px;
-  width: 48px;
-  height: 48px;
+  font-size: 29px;
+  width: 58px;
+  height: 58px;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -33,26 +33,26 @@
 }
 
 .title {
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   color: #6b7280;
-  margin: 0 0 8px 0;
+  margin: 0 0 10px 0;
 }
 
 .value {
-  font-size: 32px;
+  font-size: 38px;
   font-weight: 700;
   color: #1f2937;
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .change {
   display: flex;
   align-items: center;
-  gap: 4px;
-  font-size: 12px;
+  gap: 5px;
+  font-size: 14px;
   font-weight: 500;
-  margin-top: 8px;
+  margin-top: 10px;
 
   &.positive {
     color: #10b981;
@@ -64,7 +64,7 @@
 }
 
 .arrow {
-  font-size: 14px;
+  font-size: 17px;
 }
 
 .activeUsers {

@@ -3,6 +3,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import AuthForm from './components/AuthForm/AuthForm';
 import Dashboard from './components/CRM/Dashboard/Dashboard';
 import PlaceholderPage from './components/CRM/PlaceholderPage/PlaceholderPage';
+import Clients from './components/CRM/Clients/Clients';
 import Profile from './components/CRM/Profile/Profile';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
@@ -53,7 +54,7 @@ function App() {
               path="/clients"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage title="Клиенты" description="Управление клиентами" />
+                  <Clients />
                 </ProtectedRoute>
               }
             />

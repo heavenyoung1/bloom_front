@@ -73,6 +73,24 @@ export interface ResendCodeResponse {
   message?: string;
 }
 
+export interface Client {
+  id: number;
+  name: string;
+  type: boolean;
+  email: string;
+  phone: string;
+  personal_info: string;
+  address: string;
+  messenger: string;
+  messenger_handle: string;
+  owner_attorney_id: number;
+  created_at: string;
+  updated_at: string;
+}
+
+// Экспортируем тип для использования в других модулях
+export type { Client as ClientType };
+
 // Базовый HTTP клиент
 const apiClient = {
   async request<T>(
@@ -269,6 +287,31 @@ export const authApi = {
   // Повторная отправка кода подтверждения
   async resendVerificationCode(data: ResendCodeRequest): Promise<ResendCodeResponse> {
     return apiClient.request<ResendCodeResponse>('/auth/resend-verification-code', 'POST', data);
+  },
+};
+
+// Интерфейс для создания клиента
+export interface CreateClientRequest {
+  name: string;
+  type: boolean;
+  email: string;
+  phone: string;
+  personal_info: string;
+  address: string;
+  messenger: string;
+  messenger_handle: string;
+}
+
+// API для работы с клиентами
+export const clientsApi = {
+  // Получение списка клиентов
+  async getClients(): Promise<Client[]> {
+    return apiClient.request<Client[]>('/clients', 'GET');
+  },
+  
+  // Создание клиента
+  async createClient(data: CreateClientRequest): Promise<Client> {
+    return apiClient.request<Client>('/clients', 'POST', data);
   },
 };
 
