@@ -463,6 +463,22 @@ export const eventsApi = {
     return apiClient.request<Event[]>(`/events/attorney/${attorneyId}`, 'GET');
   },
   
+  // Получение событий для конкретного дела
+  async getEventsByCase(caseId: number): Promise<Event[]> {
+    return apiClient.request<Event[]>(`/events/cases/${caseId}`, 'GET');
+  },
+  
+  // Получение количества событий для дела
+  async getCaseEventsCount(caseId: number): Promise<number> {
+    try {
+      const data = await apiClient.request<Event[]>(`/events/cases/${caseId}`, 'GET');
+      return Array.isArray(data) ? data.length : 0;
+    } catch (err) {
+      console.error(`Ошибка получения количества событий для дела ${caseId}:`, err);
+      return 0;
+    }
+  },
+  
   // Получение конкретного события
   async getEvent(eventId: number): Promise<Event> {
     return apiClient.request<Event>(`/events/${eventId}`, 'GET');
@@ -498,11 +514,33 @@ export interface Document {
   updated_at: string;
 }
 
+// Интерфейс для ответа со списком документов
+export interface DocumentsResponse {
+  documents: Document[];
+  total: number;
+}
+
 // API для работы с документами
 export const documentsApi = {
   // Получение списка документов дела
-  async getCaseDocuments(caseId: number): Promise<Document[]> {
-    return apiClient.request<Document[]>(`/cases/${caseId}/documents`, 'GET');
+  async getCaseDocuments(caseId: number): Promise<Document[] | DocumentsResponse> {
+    return apiClient.request<Document[] | DocumentsResponse>(`/cases/${caseId}/documents`, 'GET');
+  },
+  
+  // Получение количества документов дела
+  async getCaseDocumentsCount(caseId: number): Promise<number> {
+    try {
+      const data = await apiClient.request<Document[] | DocumentsResponse>(`/cases/${caseId}/documents`, 'GET');
+      if (typeof data === 'object' && data !== null && 'total' in data) {
+        return (data as DocumentsResponse).total;
+      } else if (Array.isArray(data)) {
+        return data.length;
+      }
+      return 0;
+    } catch (err) {
+      console.error(`Ошибка получения количества документов для дела ${caseId}:`, err);
+      return 0;
+    }
   },
   
   // Загрузка документа в дело

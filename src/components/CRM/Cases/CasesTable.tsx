@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { casesApi } from '../../../services/api';
+import { casesApi, documentsApi, eventsApi } from '../../../services/api';
 import type { Case } from '../../../services/api';
 import { getStatusColor } from '../../../types/caseStatus';
 import CreateCaseForm from './CreateCaseForm';
@@ -14,6 +14,10 @@ const CasesTable: React.FC = () => {
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [selectedCaseId, setSelectedCaseId] = useState<number | null>(null);
+  const [documentsCount, setDocumentsCount] = useState<Record<number, number>>({});
+  const [loadingDocumentsCount, setLoadingDocumentsCount] = useState<Record<number, boolean>>({});
+  const [eventsCount, setEventsCount] = useState<Record<number, number>>({});
+  const [loadingEventsCount, setLoadingEventsCount] = useState<Record<number, boolean>>({});
   const itemsPerPage = 8;
 
   const fetchCases = async () => {
@@ -22,12 +26,79 @@ const CasesTable: React.FC = () => {
       setError(null);
       const data = await casesApi.getCases();
       setCases(data);
+      // Загружаем количество документов и событий для каждого дела
+      loadDocumentsCounts(data);
+      loadEventsCounts(data);
     } catch (err: any) {
       console.error('Ошибка загрузки дел:', err);
       setError(err.message || 'Не удалось загрузить дела');
     } finally {
       setLoading(false);
     }
+  };
+
+  const loadDocumentsCounts = async (casesList: Case[]) => {
+    // Загружаем количество документов для всех дел параллельно
+    const counts: Record<number, number> = {};
+    const loading: Record<number, boolean> = {};
+    
+    casesList.forEach(caseItem => {
+      loading[caseItem.id] = true;
+    });
+    setLoadingDocumentsCount({ ...loadingDocumentsCount, ...loading });
+
+    const promises = casesList.map(async (caseItem) => {
+      try {
+        const count = await documentsApi.getCaseDocumentsCount(caseItem.id);
+        counts[caseItem.id] = count;
+      } catch (err) {
+        console.error(`Ошибка загрузки количества документов для дела ${caseItem.id}:`, err);
+        counts[caseItem.id] = 0;
+      }
+    });
+
+    await Promise.all(promises);
+    
+    setDocumentsCount({ ...documentsCount, ...counts });
+    
+    // Очищаем флаги загрузки
+    const clearedLoading: Record<number, boolean> = {};
+    casesList.forEach(caseItem => {
+      clearedLoading[caseItem.id] = false;
+    });
+    setLoadingDocumentsCount({ ...loadingDocumentsCount, ...clearedLoading });
+  };
+
+  const loadEventsCounts = async (casesList: Case[]) => {
+    // Загружаем количество событий для всех дел параллельно
+    const counts: Record<number, number> = {};
+    const loading: Record<number, boolean> = {};
+    
+    casesList.forEach(caseItem => {
+      loading[caseItem.id] = true;
+    });
+    setLoadingEventsCount({ ...loadingEventsCount, ...loading });
+
+    const promises = casesList.map(async (caseItem) => {
+      try {
+        const count = await eventsApi.getCaseEventsCount(caseItem.id);
+        counts[caseItem.id] = count;
+      } catch (err) {
+        console.error(`Ошибка загрузки количества событий для дела ${caseItem.id}:`, err);
+        counts[caseItem.id] = 0;
+      }
+    });
+
+    await Promise.all(promises);
+    
+    setEventsCount({ ...eventsCount, ...counts });
+    
+    // Очищаем флаги загрузки
+    const clearedLoading: Record<number, boolean> = {};
+    casesList.forEach(caseItem => {
+      clearedLoading[caseItem.id] = false;
+    });
+    setLoadingEventsCount({ ...loadingEventsCount, ...clearedLoading });
   };
 
   useEffect(() => {
@@ -112,6 +183,8 @@ const CasesTable: React.FC = () => {
                 <tr>
                   <th>Название</th>
                   <th>Статус</th>
+                  <th>Количество документов</th>
+                  <th>Количество событий</th>
                   <th>Дата создания</th>
                 </tr>
               </thead>
@@ -130,6 +203,24 @@ const CasesTable: React.FC = () => {
                       >
                         {caseItem.status}
                       </span>
+                    </td>
+                    <td>
+                      {loadingDocumentsCount[caseItem.id] ? (
+                        <span className={styles.loadingCount}>...</span>
+                      ) : (
+                        <span className={styles.documentsCount}>
+                          {documentsCount[caseItem.id] ?? 0}
+                        </span>
+                      )}
+                    </td>
+                    <td>
+                      {loadingEventsCount[caseItem.id] ? (
+                        <span className={styles.loadingCount}>...</span>
+                      ) : (
+                        <span className={styles.eventsCount}>
+                          {eventsCount[caseItem.id] ?? 0}
+                        </span>
+                      )}
                     </td>
                     <td>{formatDate(caseItem.created_at)}</td>
                   </tr>

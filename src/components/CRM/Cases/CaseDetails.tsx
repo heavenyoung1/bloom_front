@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { casesApi, clientsApi, documentsApi } from '../../../services/api';
-import type { Case, Client, UpdateCaseRequest, Document } from '../../../services/api';
+import type { Case, Client, UpdateCaseRequest, Document, DocumentsResponse } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getStatusColor, CASE_STATUSES } from '../../../types/caseStatus';
 import styles from './CaseDetails.module.scss';
@@ -97,11 +97,11 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({ caseId, onClose, onUpdate, on
       if (Array.isArray(data)) {
         documentsList = data;
       } else if (data && typeof data === 'object') {
-        // Проверяем различные возможные поля
-        if ('data' in data && Array.isArray(data.data)) {
+        // Проверяем формат с полем documents (новый формат)
+        if ('documents' in data && Array.isArray((data as DocumentsResponse).documents)) {
+          documentsList = (data as DocumentsResponse).documents;
+        } else if ('data' in data && Array.isArray(data.data)) {
           documentsList = data.data;
-        } else if ('documents' in data && Array.isArray(data.documents)) {
-          documentsList = data.documents;
         } else if ('items' in data && Array.isArray(data.items)) {
           documentsList = data.items;
         } else {
