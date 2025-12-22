@@ -175,7 +175,7 @@ const Profile: React.FC = () => {
                 )}
                 {user?.license_id && (
                   <p className={styles.profileDetail}>
-                    <span className={styles.detailLabel}>Лицензия:</span> {user.license_id}
+                    <span className={styles.detailLabel}>Номер удостоверения:</span> {user.license_id}
                   </p>
                 )}
               </div>
@@ -238,7 +238,7 @@ const Profile: React.FC = () => {
                 </div>
                 <div className={styles.formRow}>
                   <label className={styles.label}>
-                    Номер лицензии
+                    Номер удостоверения
                     <input
                       type="text"
                       name="license_id"
