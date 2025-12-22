@@ -484,4 +484,120 @@ export const eventsApi = {
   },
 };
 
+// Интерфейс для документа
+export interface Document {
+  id: number;
+  case_id: number;
+  file_name: string;
+  storage_path?: string;
+  file_size?: number | string;
+  mime_type?: string;
+  attorney_id?: number;
+  description?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// API для работы с документами
+export const documentsApi = {
+  // Получение списка документов дела
+  async getCaseDocuments(caseId: number): Promise<Document[]> {
+    return apiClient.request<Document[]>(`/cases/${caseId}/documents`, 'GET');
+  },
+  
+  // Загрузка документа в дело
+  async uploadDocument(caseId: number, file: File): Promise<Document> {
+    const url = `${API_BASE_URL}/cases/${caseId}/documents`;
+    const token = localStorage.getItem('token');
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(url, {
+      method: 'POST',
+      headers,
+      credentials: 'include',
+      body: formData,
+    });
+    
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let errorMessage = 'Ошибка загрузки документа';
+      
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.detail) {
+          errorMessage = typeof errorData.detail === 'string' 
+            ? errorData.detail 
+            : JSON.stringify(errorData.detail);
+        }
+      }
+      
+      throw {
+        message: errorMessage,
+        status: response.status,
+      } as ApiError;
+    }
+    
+    return await response.json();
+  },
+  
+  // Получение данных документа
+  async getDocument(documentId: number): Promise<Document> {
+    return apiClient.request<Document>(`/documents/${documentId}`, 'GET');
+  },
+  
+  // Удаление документа
+  async deleteDocument(documentId: number): Promise<{ success: boolean; message?: string }> {
+    return apiClient.request<{ success: boolean; message?: string }>(`/documents/${documentId}/`, 'DELETE');
+  },
+  
+  // Скачивание документа
+  async downloadDocument(documentId: number): Promise<Blob> {
+    const url = `${API_BASE_URL}/documents/${documentId}/download`;
+    const token = localStorage.getItem('token');
+    
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let errorMessage = 'Ошибка скачивания документа';
+      
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.detail) {
+          errorMessage = typeof errorData.detail === 'string' 
+            ? errorData.detail 
+            : JSON.stringify(errorData.detail);
+        }
+      }
+      
+      throw {
+        message: errorMessage,
+        status: response.status,
+      } as ApiError;
+    }
+    
+    return await response.blob();
+  },
+};
+
 export default apiClient;

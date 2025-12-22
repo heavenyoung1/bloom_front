@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { casesApi, clientsApi } from '../../../services/api';
-import type { Case, Client, UpdateCaseRequest } from '../../../services/api';
+import { casesApi, clientsApi, documentsApi } from '../../../services/api';
+import type { Case, Client, UpdateCaseRequest, Document } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import { getStatusColor, CASE_STATUSES } from '../../../types/caseStatus';
 import styles from './CaseDetails.module.scss';
@@ -32,10 +32,17 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({ caseId, onClose, onUpdate, on
   const [clients, setClients] = useState<Client[]>([]);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  
+  // Состояния для документов
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [loadingDocuments, setLoadingDocuments] = useState(false);
+  const [uploadingDocument, setUploadingDocument] = useState(false);
+  const [deletingDocumentId, setDeletingDocumentId] = useState<number | null>(null);
 
   useEffect(() => {
     loadCaseData();
     loadClients();
+    loadDocuments();
   }, [caseId]);
 
   const loadCaseData = async () => {
@@ -76,6 +83,123 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({ caseId, onClose, onUpdate, on
     } catch (err) {
       console.error('Ошибка загрузки клиентов:', err);
     }
+  };
+
+  const loadDocuments = async () => {
+    try {
+      setLoadingDocuments(true);
+      const data = await documentsApi.getCaseDocuments(caseId);
+      console.log('Ответ API для документов:', data); // Для отладки
+      
+      let documentsList: Document[] = [];
+      
+      // Обрабатываем разные форматы ответа API
+      if (Array.isArray(data)) {
+        documentsList = data;
+      } else if (data && typeof data === 'object') {
+        // Проверяем различные возможные поля
+        if ('data' in data && Array.isArray(data.data)) {
+          documentsList = data.data;
+        } else if ('documents' in data && Array.isArray(data.documents)) {
+          documentsList = data.documents;
+        } else if ('items' in data && Array.isArray(data.items)) {
+          documentsList = data.items;
+        } else {
+          console.warn('Неожиданный формат ответа API для документов:', data);
+          setDocuments([]);
+          return;
+        }
+      } else {
+        console.warn('Ответ API не является массивом или объектом:', data);
+        setDocuments([]);
+        return;
+      }
+      
+      // Если в списке нет file_name, загружаем детальную информацию для каждого документа
+      const documentsWithDetails = await Promise.all(
+        documentsList.map(async (doc) => {
+          // Если у документа уже есть file_name, возвращаем его как есть
+          if (doc.file_name) {
+            return doc;
+          }
+          // Иначе загружаем детальную информацию
+          try {
+            const detailedDoc = await documentsApi.getDocument(doc.id);
+            return detailedDoc;
+          } catch (err) {
+            console.error(`Ошибка загрузки деталей документа ${doc.id}:`, err);
+            return doc; // Возвращаем исходный документ, если не удалось загрузить детали
+          }
+        })
+      );
+      
+      setDocuments(documentsWithDetails);
+    } catch (err: any) {
+      console.error('Ошибка загрузки документов:', err);
+      setDocuments([]); // Устанавливаем пустой массив при ошибке
+    } finally {
+      setLoadingDocuments(false);
+    }
+  };
+
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setUploadingDocument(true);
+    try {
+      await documentsApi.uploadDocument(caseId, file);
+      await loadDocuments();
+      e.target.value = ''; // Сброс input
+    } catch (err: any) {
+      console.error('Ошибка загрузки документа:', err);
+      alert(err.message || 'Не удалось загрузить документ');
+    } finally {
+      setUploadingDocument(false);
+    }
+  };
+
+  const handleDownloadDocument = async (doc: Document) => {
+    try {
+      const blob = await documentsApi.downloadDocument(doc.id);
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = doc.file_name;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (err: any) {
+      console.error('Ошибка скачивания документа:', err);
+      alert(err.message || 'Не удалось скачать документ');
+    }
+  };
+
+  const handleDeleteDocument = async (documentId: number) => {
+    if (!window.confirm('Вы уверены, что хотите удалить этот документ? Это действие нельзя отменить.')) {
+      return;
+    }
+
+    setDeletingDocumentId(documentId);
+    try {
+      await documentsApi.deleteDocument(documentId);
+      await loadDocuments();
+    } catch (err: any) {
+      console.error('Ошибка удаления документа:', err);
+      alert(err.message || 'Не удалось удалить документ');
+    } finally {
+      setDeletingDocumentId(null);
+    }
+  };
+
+  const formatFileSize = (bytes?: number | string): string => {
+    if (!bytes) return 'Неизвестно';
+    const size = typeof bytes === 'string' ? parseInt(bytes, 10) : bytes;
+    if (isNaN(size)) return 'Неизвестно';
+    if (size < 1024) return `${size} Б`;
+    if (size < 1024 * 1024) return `${(size / 1024).toFixed(2)} КБ`;
+    return `${(size / (1024 * 1024)).toFixed(2)} МБ`;
   };
 
   const handleInputChange = (
@@ -375,6 +499,57 @@ const CaseDetails: React.FC<CaseDetailsProps> = ({ caseId, onClose, onUpdate, on
                   <span className={styles.infoLabel}>Последнее обновление:</span>
                   <span className={styles.infoValue}>{formatDate(caseData.updated_at)}</span>
                 </div>
+              </div>
+
+              <div className={styles.documentsSection}>
+                <div className={styles.documentsHeader}>
+                  <h3 className={styles.documentsTitle}>Документы</h3>
+                  <label className={styles.uploadButton}>
+                    <input
+                      type="file"
+                      onChange={handleFileUpload}
+                      disabled={uploadingDocument}
+                      style={{ display: 'none' }}
+                    />
+                    {uploadingDocument ? 'Загрузка...' : '+ Загрузить документ'}
+                  </label>
+                </div>
+                
+                {loadingDocuments ? (
+                  <div className={styles.documentsLoading}>Загрузка документов...</div>
+                ) : !Array.isArray(documents) || documents.length === 0 ? (
+                  <div className={styles.documentsEmpty}>Документы отсутствуют</div>
+                ) : (
+                  <div className={styles.documentsList}>
+                    {documents.map((doc) => (
+                      <div key={doc.id} className={styles.documentItem}>
+                        <div className={styles.documentInfo}>
+                          <span className={styles.documentName}>{doc.file_name}</span>
+                          <span className={styles.documentMeta}>
+                            {formatFileSize(doc.file_size)} • {formatDate(doc.created_at)}
+                          </span>
+                        </div>
+                        <div className={styles.documentActions}>
+                          <button
+                            onClick={() => handleDownloadDocument(doc)}
+                            className={styles.downloadButton}
+                            title="Скачать"
+                          >
+                            ⬇
+                          </button>
+                          <button
+                            onClick={() => handleDeleteDocument(doc.id)}
+                            className={styles.deleteDocumentButton}
+                            disabled={deletingDocumentId === doc.id}
+                            title="Удалить"
+                          >
+                            {deletingDocumentId === doc.id ? '...' : '×'}
+                          </button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div className={styles.actions}>
