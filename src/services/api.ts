@@ -479,6 +479,11 @@ export const eventsApi = {
     }
   },
   
+  // Получение ближайших событий для адвоката
+  async getNearestEvents(attorneyId: number): Promise<Event[]> {
+    return apiClient.request<Event[]>(`/nearest-events/attorney/${attorneyId}`, 'GET');
+  },
+  
   // Получение конкретного события
   async getEvent(eventId: number): Promise<Event> {
     return apiClient.request<Event>(`/events/${eventId}`, 'GET');

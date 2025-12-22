@@ -357,23 +357,8 @@ const RegistrationForm: React.FC = () => {
           {errors.license_id && <span className={styles.error}>{errors.license_id}</span>}
         </div>
         
-        {/* Имя, Фамилия, Отчество в одной строке */}
+        {/* Фамилия, Имя, Отчество в одной строке */}
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>
-              Имя <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              name="first_name"
-              value={formData.first_name}
-              onChange={handleInputChange}
-              placeholder="Иван"
-              className={`${styles.input} ${errors.first_name ? styles.inputError : ''}`}
-            />
-            {errors.first_name && <span className={styles.error}>{errors.first_name}</span>}
-          </div>
-          
           <div className={styles.formGroup}>
             <label className={styles.label}>
               Фамилия <span className={styles.required}>*</span>
@@ -387,6 +372,21 @@ const RegistrationForm: React.FC = () => {
               className={`${styles.input} ${errors.last_name ? styles.inputError : ''}`}
             />
             {errors.last_name && <span className={styles.error}>{errors.last_name}</span>}
+          </div>
+          
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Имя <span className={styles.required}>*</span>
+            </label>
+            <input
+              type="text"
+              name="first_name"
+              value={formData.first_name}
+              onChange={handleInputChange}
+              placeholder="Иван"
+              className={`${styles.input} ${errors.first_name ? styles.inputError : ''}`}
+            />
+            {errors.first_name && <span className={styles.error}>{errors.first_name}</span>}
           </div>
         </div>
         

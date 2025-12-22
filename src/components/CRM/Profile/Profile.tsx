@@ -149,12 +149,12 @@ const Profile: React.FC = () => {
           
           <div className={styles.profileCard}>
             <div className={styles.profileAvatar}>
-              {user?.first_name?.[0] || 'U'}
+              {user?.last_name?.[0] || user?.first_name?.[0] || 'U'}
             </div>
             {!isEditing ? (
               <div className={styles.profileInfo}>
                 <h2 className={styles.profileName}>
-                  {user?.first_name || 'User'} {user?.last_name || ''}
+                  {user?.last_name || ''} {user?.first_name || 'User'}
                   {user?.patronymic && ` ${user.patronymic}`}
                 </h2>
                 <p className={styles.profileRole}>Юрист</p>
@@ -199,11 +199,11 @@ const Profile: React.FC = () => {
                 </div>
                 <div className={styles.formRow}>
                   <label className={styles.label}>
-                    Имя
+                    Фамилия
                     <input
                       type="text"
-                      name="first_name"
-                      value={formData.first_name}
+                      name="last_name"
+                      value={formData.last_name}
                       onChange={handleInputChange}
                       className={styles.input}
                       disabled={isSaving}
@@ -212,11 +212,11 @@ const Profile: React.FC = () => {
                 </div>
                 <div className={styles.formRow}>
                   <label className={styles.label}>
-                    Фамилия
+                    Имя
                     <input
                       type="text"
-                      name="last_name"
-                      value={formData.last_name}
+                      name="first_name"
+                      value={formData.first_name}
                       onChange={handleInputChange}
                       className={styles.input}
                       disabled={isSaving}

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '../Sidebar/Sidebar';
 import DashboardHeader from '../DashboardHeader/DashboardHeader';
 import MetricCard from '../MetricCard/MetricCard';
+import NearestEvents from './NearestEvents';
 import CustomersTable from '../CustomersTable/CustomersTable';
 import styles from './Dashboard.module.scss';
 
@@ -38,12 +39,7 @@ const Dashboard: React.FC = () => {
             icon="👤"
             change={{ value: '1% this month', isPositive: false }}
           />
-          <MetricCard
-            title="Active Now"
-            value="189"
-            icon="💻"
-            activeUsers={['A', 'B', 'C', 'D']}
-          />
+          <NearestEvents />
         </div>
 
         <CustomersTable />
