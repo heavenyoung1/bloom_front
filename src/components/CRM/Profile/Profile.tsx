@@ -3,7 +3,8 @@ import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import Sidebar from '../Sidebar/Sidebar';
 import styles from './Profile.module.scss';
-import type { UpdateProfileRequest } from '../../../services/api';
+import type { UpdateProfileRequest, PaymentDetail, CreatePaymentDetailRequest, UpdatePaymentDetailRequest } from '../../../services/api';
+import { paymentDetailApi } from '../../../services/api';
 
 interface ProfileFormData {
   email: string;
@@ -33,6 +34,23 @@ const Profile: React.FC = () => {
     telegram_username: '',
   });
   const [error, setError] = useState<string | null>(null);
+  
+  // Состояние для платежной информации
+  const [paymentDetail, setPaymentDetail] = useState<PaymentDetail | null>(null);
+  const [isLoadingPaymentDetail, setIsLoadingPaymentDetail] = useState(false);
+  const [isEditingPaymentDetail, setIsEditingPaymentDetail] = useState(false);
+  const [isSavingPaymentDetail, setIsSavingPaymentDetail] = useState(false);
+  const [paymentDetailFormData, setPaymentDetailFormData] = useState<CreatePaymentDetailRequest>({
+    address: '',
+    bank_account: '',
+    bank_recipient: '',
+    bik: '',
+    correspondent_account: '',
+    index_address: '',
+    inn: '',
+    kpp: '',
+  });
+  const [paymentDetailError, setPaymentDetailError] = useState<string | null>(null);
 
   const { user, logout, updateProfile, checkAuth } = useAuth();
   const navigate = useNavigate();
@@ -53,8 +71,43 @@ const Profile: React.FC = () => {
         phone: user.phone || '',
         telegram_username: user.telegram_username || '',
       });
+      
+      // Загружаем платежную информацию
+      loadPaymentDetail();
     }
   }, [user]);
+  
+  // Загрузка платежной информации
+  const loadPaymentDetail = async () => {
+    if (!user?.id) return;
+    
+    setIsLoadingPaymentDetail(true);
+    setPaymentDetailError(null);
+    
+    try {
+      const data = await paymentDetailApi.getPaymentDetailByAttorney(user.id);
+      setPaymentDetail(data);
+      setPaymentDetailFormData({
+        address: data.address || '',
+        bank_account: data.bank_account || '',
+        bank_recipient: data.bank_recipient || '',
+        bik: data.bik || '',
+        correspondent_account: data.correspondent_account || '',
+        index_address: data.index_address || '',
+        inn: data.inn || '',
+        kpp: data.kpp || '',
+      });
+    } catch (err: any) {
+      // Если платежная информация не найдена (404), это нормально
+      if (err.status !== 404) {
+        console.error('Ошибка загрузки платежной информации:', err);
+        setPaymentDetailError(err.message || 'Ошибка при загрузке платежной информации');
+      }
+      setPaymentDetail(null);
+    } finally {
+      setIsLoadingPaymentDetail(false);
+    }
+  };
 
   const toggleSidebar = () => {
     setIsSidebarCollapsed(!isSidebarCollapsed);
@@ -129,6 +182,107 @@ const Profile: React.FC = () => {
       console.error('Logout error:', error);
     }
   };
+  
+  // Обработчики для платежной информации
+  const handlePaymentDetailInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setPaymentDetailFormData(prev => ({
+      ...prev,
+      [name]: value,
+    }));
+    setPaymentDetailError(null);
+  };
+  
+  const handleEditPaymentDetail = () => {
+    setIsEditingPaymentDetail(true);
+    setPaymentDetailError(null);
+  };
+  
+  const handleCancelPaymentDetail = () => {
+    if (paymentDetail) {
+      setPaymentDetailFormData({
+        address: paymentDetail.address || '',
+        bank_account: paymentDetail.bank_account || '',
+        bank_recipient: paymentDetail.bank_recipient || '',
+        bik: paymentDetail.bik || '',
+        correspondent_account: paymentDetail.correspondent_account || '',
+        index_address: paymentDetail.index_address || '',
+        inn: paymentDetail.inn || '',
+        kpp: paymentDetail.kpp || '',
+      });
+    } else {
+      setPaymentDetailFormData({
+        address: '',
+        bank_account: '',
+        bank_recipient: '',
+        bik: '',
+        correspondent_account: '',
+        index_address: '',
+        inn: '',
+        kpp: '',
+      });
+    }
+    setIsEditingPaymentDetail(false);
+    setPaymentDetailError(null);
+  };
+  
+  const handleSavePaymentDetail = async () => {
+    if (!user?.id) return;
+    
+    setIsSavingPaymentDetail(true);
+    setPaymentDetailError(null);
+    
+    try {
+      if (paymentDetail) {
+        // Обновляем существующую платежную информацию
+        const updated = await paymentDetailApi.updatePaymentDetail(paymentDetail.id, paymentDetailFormData);
+        setPaymentDetail(updated);
+        setIsEditingPaymentDetail(false);
+      } else {
+        // Создаем новую платежную информацию
+        const created = await paymentDetailApi.createPaymentDetail(paymentDetailFormData);
+        setPaymentDetail(created);
+        setIsEditingPaymentDetail(false);
+      }
+    } catch (err: any) {
+      console.error('Ошибка сохранения платежной информации:', err);
+      setPaymentDetailError(err.message || 'Ошибка при сохранении платежной информации');
+    } finally {
+      setIsSavingPaymentDetail(false);
+    }
+  };
+  
+  const handleDeletePaymentDetail = async () => {
+    if (!paymentDetail?.id) return;
+    
+    if (!window.confirm('Вы уверены, что хотите удалить платежную информацию?')) {
+      return;
+    }
+    
+    setIsSavingPaymentDetail(true);
+    setPaymentDetailError(null);
+    
+    try {
+      await paymentDetailApi.deletePaymentDetail(paymentDetail.id);
+      setPaymentDetail(null);
+      setPaymentDetailFormData({
+        address: '',
+        bank_account: '',
+        bank_recipient: '',
+        bik: '',
+        correspondent_account: '',
+        index_address: '',
+        inn: '',
+        kpp: '',
+      });
+      setIsEditingPaymentDetail(false);
+    } catch (err: any) {
+      console.error('Ошибка удаления платежной информации:', err);
+      setPaymentDetailError(err.message || 'Ошибка при удалении платежной информации');
+    } finally {
+      setIsSavingPaymentDetail(false);
+    }
+  };
 
   return (
     <div className={styles.page}>
@@ -137,20 +291,33 @@ const Profile: React.FC = () => {
         <div className={styles.container}>
           <div className={styles.header}>
             <h1 className={styles.title}>Личный кабинет</h1>
-            {!isEditing && (
-              <button
-                className={styles.editButton}
-                onClick={handleEdit}
-              >
-                Редактировать
-              </button>
-            )}
+            <button
+              className={styles.logoutButton}
+              onClick={handleLogout}
+            >
+              <span className={styles.logoutIcon}>🚪</span>
+              <span>Выйти</span>
+            </button>
           </div>
           
-          <div className={styles.profileCard}>
-            <div className={styles.profileAvatar}>
-              {user?.last_name?.[0] || user?.first_name?.[0] || 'U'}
-            </div>
+          <div className={styles.columnsLayout}>
+            {/* Левая колонка - Основная информация */}
+            <div className={styles.leftColumn}>
+              <div className={styles.profileCard}>
+                <div className={styles.profileHeader}>
+                  <h2 className={styles.profileCardTitle}>Основная информация</h2>
+                  {!isEditing && (
+                    <button
+                      className={styles.editButton}
+                      onClick={handleEdit}
+                    >
+                      Редактировать
+                    </button>
+                  )}
+                </div>
+                <div className={styles.profileAvatar}>
+                  {user?.last_name?.[0] || user?.first_name?.[0] || 'U'}
+                </div>
             {!isEditing ? (
               <div className={styles.profileInfo}>
                 <h2 className={styles.profileName}>
@@ -295,16 +462,219 @@ const Profile: React.FC = () => {
                 </div>
               </div>
             )}
-          </div>
+              </div>
+            </div>
 
-          <div className={styles.actions}>
-            <button
-              className={styles.logoutButton}
-              onClick={handleLogout}
-            >
-              <span className={styles.logoutIcon}>🚪</span>
-              <span>Выйти из аккаунта</span>
-            </button>
+            {/* Правая колонка - Платежная информация */}
+            <div className={styles.rightColumn}>
+              <div className={styles.paymentDetailCard}>
+            <div className={styles.paymentDetailHeader}>
+              <h2 className={styles.paymentDetailTitle}>Платежная информация</h2>
+              {!isEditingPaymentDetail && (
+                <button
+                  className={styles.editButton}
+                  onClick={handleEditPaymentDetail}
+                >
+                  {paymentDetail ? 'Редактировать' : 'Добавить'}
+                </button>
+              )}
+            </div>
+            
+            {isLoadingPaymentDetail ? (
+              <div className={styles.loadingMessage}>Загрузка...</div>
+            ) : !isEditingPaymentDetail ? (
+              paymentDetail ? (
+                <div className={styles.paymentDetailInfo}>
+                  {paymentDetail.address && (
+                    <p className={styles.profileDetail}>
+                      <span className={styles.detailLabel}>Адрес:</span> {paymentDetail.address}
+                    </p>
+                  )}
+                  {paymentDetail.index_address && (
+                    <p className={styles.profileDetail}>
+                      <span className={styles.detailLabel}>Почтовый индекс:</span> {paymentDetail.index_address}
+                    </p>
+                  )}
+                  {paymentDetail.bank_recipient && (
+                    <p className={styles.profileDetail}>
+                      <span className={styles.detailLabel}>Получатель банка:</span> {paymentDetail.bank_recipient}
+                    </p>
+                  )}
+                  {paymentDetail.bank_account && (
+                    <p className={styles.profileDetail}>
+                      <span className={styles.detailLabel}>Банковский счет:</span> {paymentDetail.bank_account}
+                    </p>
+                  )}
+                  {paymentDetail.bik && (
+                    <p className={styles.profileDetail}>
+                      <span className={styles.detailLabel}>БИК:</span> {paymentDetail.bik}
+                    </p>
+                  )}
+                  {paymentDetail.correspondent_account && (
+                    <p className={styles.profileDetail}>
+                      <span className={styles.detailLabel}>Корреспондентский счет:</span> {paymentDetail.correspondent_account}
+                    </p>
+                  )}
+                  {paymentDetail.inn && (
+                    <p className={styles.profileDetail}>
+                      <span className={styles.detailLabel}>ИНН:</span> {paymentDetail.inn}
+                    </p>
+                  )}
+                  {paymentDetail.kpp && (
+                    <p className={styles.profileDetail}>
+                      <span className={styles.detailLabel}>КПП:</span> {paymentDetail.kpp}
+                    </p>
+                  )}
+                  <button
+                    className={styles.deleteButton}
+                    onClick={handleDeletePaymentDetail}
+                    disabled={isSavingPaymentDetail}
+                  >
+                    Удалить платежную информацию
+                  </button>
+                </div>
+              ) : (
+                <div className={styles.emptyPaymentDetail}>
+                  <p>Платежная информация не добавлена</p>
+                </div>
+              )
+            ) : (
+              <div className={styles.paymentDetailForm}>
+                {paymentDetailError && (
+                  <div className={styles.errorMessage}>{paymentDetailError}</div>
+                )}
+                <div className={styles.formRow}>
+                  <label className={styles.label}>
+                    Адрес
+                    <input
+                      type="text"
+                      name="address"
+                      value={paymentDetailFormData.address}
+                      onChange={handlePaymentDetailInputChange}
+                      className={styles.input}
+                      disabled={isSavingPaymentDetail}
+                      placeholder="г. Санкт-Петербург, ул. Площадь Восстания, д.10, кв. 54"
+                    />
+                  </label>
+                </div>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>
+                    Почтовый индекс
+                    <input
+                      type="text"
+                      name="index_address"
+                      value={paymentDetailFormData.index_address}
+                      onChange={handlePaymentDetailInputChange}
+                      className={styles.input}
+                      disabled={isSavingPaymentDetail}
+                      placeholder="241099"
+                    />
+                  </label>
+                </div>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>
+                    Получатель банка
+                    <input
+                      type="text"
+                      name="bank_recipient"
+                      value={paymentDetailFormData.bank_recipient}
+                      onChange={handlePaymentDetailInputChange}
+                      className={styles.input}
+                      disabled={isSavingPaymentDetail}
+                      placeholder='ПАО "Z - банк", лудший банк, филиал в Мухосранске'
+                    />
+                  </label>
+                </div>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>
+                    Банковский счет
+                    <input
+                      type="text"
+                      name="bank_account"
+                      value={paymentDetailFormData.bank_account}
+                      onChange={handlePaymentDetailInputChange}
+                      className={styles.input}
+                      disabled={isSavingPaymentDetail}
+                      placeholder="12345678912345678921"
+                    />
+                  </label>
+                </div>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>
+                    БИК
+                    <input
+                      type="text"
+                      name="bik"
+                      value={paymentDetailFormData.bik}
+                      onChange={handlePaymentDetailInputChange}
+                      className={styles.input}
+                      disabled={isSavingPaymentDetail}
+                      placeholder="987654319"
+                    />
+                  </label>
+                </div>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>
+                    Корреспондентский счет
+                    <input
+                      type="text"
+                      name="correspondent_account"
+                      value={paymentDetailFormData.correspondent_account}
+                      onChange={handlePaymentDetailInputChange}
+                      className={styles.input}
+                      disabled={isSavingPaymentDetail}
+                      placeholder="14680414794257063165"
+                    />
+                  </label>
+                </div>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>
+                    ИНН
+                    <input
+                      type="text"
+                      name="inn"
+                      value={paymentDetailFormData.inn}
+                      onChange={handlePaymentDetailInputChange}
+                      className={styles.input}
+                      disabled={isSavingPaymentDetail}
+                      placeholder="1234567843"
+                    />
+                  </label>
+                </div>
+                <div className={styles.formRow}>
+                  <label className={styles.label}>
+                    КПП
+                    <input
+                      type="text"
+                      name="kpp"
+                      value={paymentDetailFormData.kpp}
+                      onChange={handlePaymentDetailInputChange}
+                      className={styles.input}
+                      disabled={isSavingPaymentDetail}
+                      placeholder="123456754"
+                    />
+                  </label>
+                </div>
+                <div className={styles.formActions}>
+                  <button
+                    className={styles.saveButton}
+                    onClick={handleSavePaymentDetail}
+                    disabled={isSavingPaymentDetail}
+                  >
+                    {isSavingPaymentDetail ? 'Сохранение...' : 'Сохранить'}
+                  </button>
+                  <button
+                    className={styles.cancelButton}
+                    onClick={handleCancelPaymentDetail}
+                    disabled={isSavingPaymentDetail}
+                  >
+                    Отмена
+                  </button>
+                </div>
+              </div>
+            )}
+              </div>
+            </div>
           </div>
         </div>
       </div>

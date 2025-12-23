@@ -643,4 +643,72 @@ export const documentsApi = {
   },
 };
 
+// Интерфейс для платежной информации
+export interface PaymentDetail {
+  id: number;
+  attorney_id: number;
+  address?: string;
+  bank_account?: string;
+  bank_recipient?: string;
+  bik?: string;
+  correspondent_account?: string;
+  index_address?: string;
+  inn?: string;
+  kpp?: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Интерфейс для создания платежной информации
+export interface CreatePaymentDetailRequest {
+  address?: string;
+  bank_account?: string;
+  bank_recipient?: string;
+  bik?: string;
+  correspondent_account?: string;
+  index_address?: string;
+  inn?: string;
+  kpp?: string;
+}
+
+// Интерфейс для обновления платежной информации
+export interface UpdatePaymentDetailRequest {
+  address?: string;
+  bank_account?: string;
+  bank_recipient?: string;
+  bik?: string;
+  correspondent_account?: string;
+  index_address?: string;
+  inn?: string;
+  kpp?: string;
+}
+
+// API для работы с платежной информацией
+export const paymentDetailApi = {
+  // Создание платежной информации
+  async createPaymentDetail(data: CreatePaymentDetailRequest): Promise<PaymentDetail> {
+    return apiClient.request<PaymentDetail>('/payment-detail/create-payment-detail', 'POST', data);
+  },
+  
+  // Получение платежной информации по ID
+  async getPaymentDetail(paymentDetailId: number): Promise<PaymentDetail> {
+    return apiClient.request<PaymentDetail>(`/payment-detail/payment-detail/${paymentDetailId}`, 'GET');
+  },
+  
+  // Получение платежной информации по ID юриста
+  async getPaymentDetailByAttorney(attorneyId: number): Promise<PaymentDetail> {
+    return apiClient.request<PaymentDetail>(`/payment-detail/payment-detail/attorneys/${attorneyId}`, 'GET');
+  },
+  
+  // Обновление платежной информации
+  async updatePaymentDetail(paymentDetailId: number, data: UpdatePaymentDetailRequest): Promise<PaymentDetail> {
+    return apiClient.request<PaymentDetail>(`/payment-detail/update-payment-detail/${paymentDetailId}`, 'PUT', data);
+  },
+  
+  // Удаление платежной информации
+  async deletePaymentDetail(paymentDetailId: number): Promise<{ success: boolean; message?: string }> {
+    return apiClient.request<{ success: boolean; message?: string }>(`/payment-detail/delete-payment-detail/${paymentDetailId}`, 'DELETE');
+  },
+};
+
 export default apiClient;
