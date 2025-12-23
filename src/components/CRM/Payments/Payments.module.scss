@@ -1,0 +1,42 @@
+.payments {
+  display: flex;
+  width: 100vw;
+  height: 100vh;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: white;
+  overflow: hidden;
+  z-index: 1;
+}
+
+.content {
+  flex: 1 1 auto;
+  margin-left: 310px;
+  padding: 30px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  transition: margin-left 0.3s ease-in-out;
+  background: white;
+  min-width: 0;
+  width: calc(100vw - 310px);
+  max-width: none;
+  height: 100vh;
+  box-sizing: border-box;
+
+  &.sidebarCollapsed {
+    margin-left: 60px;
+    width: calc(100vw - 60px);
+  }
+}
+
+@media (max-width: 768px) {
+  .content {
+    margin-left: 0;
+    padding: 20px;
+    width: 100%;
+  }
+}
+

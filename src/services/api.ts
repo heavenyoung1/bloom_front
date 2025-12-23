@@ -711,4 +711,117 @@ export const paymentDetailApi = {
   },
 };
 
+// Интерфейс для платежа клиента
+export interface ClientPayment {
+  id: number;
+  attorney_id: number;
+  client_id: number;
+  condition?: string;
+  name: string;
+  pade_date?: string;
+  paid: number;
+  paid_deadline?: string;
+  paid_str?: string;
+  status: string;
+  taxable: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+// Интерфейс для создания платежа клиента
+export interface CreateClientPaymentRequest {
+  attorney_id: number;
+  client_id: number;
+  condition?: string;
+  name: string;
+  pade_date?: string;
+  paid: number;
+  paid_deadline?: string;
+  paid_str?: string;
+  status: string;
+  taxable: boolean;
+}
+
+// Интерфейс для обновления платежа клиента
+export interface UpdateClientPaymentRequest {
+  attorney_id?: number;
+  client_id?: number;
+  condition?: string;
+  name?: string;
+  pade_date?: string;
+  paid?: number;
+  paid_deadline?: string;
+  paid_str?: string;
+  status?: string;
+  taxable?: boolean;
+}
+
+// API для работы с платежами клиентов
+export const clientPaymentsApi = {
+  // Создание платежа для клиента
+  async createClientPayment(data: CreateClientPaymentRequest): Promise<ClientPayment> {
+    return apiClient.request<ClientPayment>('/create-client-payment', 'POST', data);
+  },
+  
+  // Получение платежа по ID
+  async getClientPayment(paymentId: number): Promise<ClientPayment> {
+    return apiClient.request<ClientPayment>(`/get-client-payment/${paymentId}`, 'GET');
+  },
+  
+  // Получение всех платежей для юриста
+  async getClientPaymentsByAttorney(attorneyId: number): Promise<ClientPayment[]> {
+    return apiClient.request<ClientPayment[]>(`/get-client-payment/attorneys/${attorneyId}`, 'GET');
+  },
+  
+  // Обновление платежа
+  async updateClientPayment(paymentId: number, data: UpdateClientPaymentRequest): Promise<ClientPayment> {
+    return apiClient.request<ClientPayment>(`/update-client-payment/${paymentId}`, 'PUT', data);
+  },
+  
+  // Удаление платежа
+  async deleteClientPayment(paymentId: number): Promise<{ success: boolean; message?: string }> {
+    return apiClient.request<{ success: boolean; message?: string }>(`/delete-client-payment/${paymentId}`, 'DELETE');
+  },
+  
+  // Скачивание PDF документа платежа
+  async downloadPaymentPdf(paymentId: number): Promise<Blob> {
+    const url = `${API_BASE_URL}/download-payment-pdf/${paymentId}`;
+    const token = localStorage.getItem('token');
+    
+    const headers: Record<string, string> = {};
+    if (token) {
+      headers['Authorization'] = `Bearer ${token}`;
+    }
+    
+    const response = await fetch(url, {
+      method: 'GET',
+      headers,
+      credentials: 'include',
+    });
+    
+    if (!response.ok) {
+      const contentType = response.headers.get('content-type');
+      let errorMessage = 'Ошибка скачивания PDF';
+      
+      if (contentType && contentType.includes('application/json')) {
+        const errorData = await response.json();
+        if (errorData.message) {
+          errorMessage = errorData.message;
+        } else if (errorData.detail) {
+          errorMessage = typeof errorData.detail === 'string' 
+            ? errorData.detail 
+            : JSON.stringify(errorData.detail);
+        }
+      }
+      
+      throw {
+        message: errorMessage,
+        status: response.status,
+      } as ApiError;
+    }
+    
+    return await response.blob();
+  },
+};
+
 export default apiClient;
