@@ -1,6 +1,8 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './RegistrationForm.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
+import EmailVerificationForm from '../EmailVerificationForm/EmailVerificationForm';
 
 // Типы для формы
 interface FormData {
@@ -33,7 +35,8 @@ interface FormErrors {
 
 const RegistrationForm: React.FC = () => {
   // Хук аутентификации
-  const { register, isLoading: authLoading } = useAuth();
+  const { register, verifyEmail, resendVerificationCode, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
 
   // Состояние формы
   const [formData, setFormData] = useState<FormData>({
@@ -54,10 +57,13 @@ const RegistrationForm: React.FC = () => {
   
   // Состояние отправки
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [showVerificationForm, setShowVerificationForm] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // Комбинированное состояние загрузки
   const isActuallySubmitting = isSubmitting || authLoading;
+
 
   // Обработчик изменения полей
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -81,9 +87,9 @@ const RegistrationForm: React.FC = () => {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {};
     
-    // Валидация лицензии (формат: XXX/XXXX)
+    // Валидация номера удостоверения (формат: XXX/XXXX)
     if (!formData.license_id) {
-      newErrors.license_id = 'Лицензионный номер обязателен';
+      newErrors.license_id = 'Номер удостоверения обязателен';
     } else if (!/^\d{1,5}\/\d{1,5}$/.test(formData.license_id)) {
       newErrors.license_id = 'Формат: 123/4567';
     }
@@ -157,98 +163,188 @@ const RegistrationForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Отправляем данные через AuthContext
       const response = await register(formData);
       
-      if (response.success) {
-        // Успешная регистрация
-        setIsSuccess(true);
-        console.log('Регистрация успешна!', response.data);
-        
-        // Перенаправление на dashboard через 2 секунды
-        setTimeout(() => {
-          // В будущем заменим на React Router
-          window.location.href = '/dashboard';
-        }, 2000);
-        
-      } else {
-        // Обработка ошибок от сервера
-        if (response.errors) {
-          // Преобразуем ошибки сервера в наш формат
-          const serverErrors: FormErrors = {};
-          
-          Object.entries(response.errors).forEach(([field, messages]) => {
-            if (messages && messages.length > 0) {
-              serverErrors[field as keyof FormErrors] = messages[0];
-            }
-          });
-          
-          setErrors(serverErrors);
-        } else if (response.message) {
-          setErrors({
-            ...errors,
-            submit: response.message
-          });
-        }
-      }
+      console.log('Registration response:', response); // Для отладки
+      console.log('Response type:', typeof response); // Для отладки
+      console.log('Response keys:', Object.keys(response || {})); // Для отладки
       
-    } catch (error: any) {
-      console.error('Ошибка регистрации:', error);
-      
-      let errorMessage = 'Ошибка регистрации. Попробуйте еще раз.';
-      
-      // Обработка разных типов ошибок
-      if (error.message) {
-        errorMessage = error.message;
-      }
-      
-      if (error.errors) {
-        // Ошибки валидации от сервера
+      // Если есть явные ошибки валидации, показываем их
+      if (response && (response as any).errors && Object.keys((response as any).errors).length > 0) {
+        console.log('Registration has errors, not showing verification form'); // Для отладки
         const serverErrors: FormErrors = {};
         
-        Object.entries(error.errors).forEach(([field, messages]) => {
-          if (Array.isArray(messages) && messages.length > 0) {
+        Object.entries((response as any).errors).forEach(([field, messages]: [string, any]) => {
+          if (messages && messages.length > 0) {
             serverErrors[field as keyof FormErrors] = messages[0];
           }
         });
         
         setErrors(serverErrors);
-      } else {
+        return; // Не показываем форму верификации при ошибках
+      }
+      
+      // Если success явно false, показываем ошибку
+      if (response && (response as any).success === false) {
+        console.log('Registration failed (success: false), not showing verification form'); // Для отладки
         setErrors({
           ...errors,
-          submit: errorMessage
+          submit: (response as any).message || 'Ошибка регистрации. Попробуйте еще раз.'
         });
+        return;
       }
+      
+      // Если регистрация успешна (нет ошибок), всегда показываем форму верификации
+      // Это может быть либо { success: true, data: {...} }, либо напрямую объект пользователя { id, email, ... }
+      console.log('Registration successful, setting showVerificationForm to true'); // Для отладки
+      setShowVerificationForm(true);
+      
+    } catch (error: any) {
+      console.log('Registration error:', error); // Для отладки
+      
+      // Проверяем, может быть это успешная регистрация, но с ошибкой HTTP
+      // Некоторые серверы могут возвращать 201 или другой статус при успешной регистрации
+      const isRegistrationSuccess = error.status === 201 || 
+                                    (error.status >= 200 && error.status < 300) ||
+                                    (error.message && (
+                                      error.message.toLowerCase().includes('created') ||
+                                      error.message.toLowerCase().includes('успешно') ||
+                                      error.message.toLowerCase().includes('success') ||
+                                      error.message.toLowerCase().includes('отправлен') ||
+                                      error.message.toLowerCase().includes('sent')
+                                    )) ||
+                                    // Если в fullResponse есть данные, возможно регистрация успешна
+                                    (error.fullResponse && (error.fullResponse.id || error.fullResponse.email));
+      
+      if (isRegistrationSuccess) {
+        console.log('Showing verification form (from error handler)'); // Для отладки
+        // Показываем форму верификации, если считаем регистрацию успешной
+        setShowVerificationForm(true);
+        return; // Важно: выходим, чтобы не показывать ошибку
+      }
+      
+      // Если это не успешная регистрация, показываем ошибку
+      let errorMessage = 'Ошибка регистрации. Попробуйте еще раз.';
+        
+        // Улучшенная обработка CORS ошибок
+        if (error.status === 0) {
+          errorMessage = 'Ошибка подключения к серверу. Проверьте настройки CORS на бэкенде или попробуйте позже.';
+        } else if (error.message) {
+          errorMessage = error.message;
+        }
+        
+        if (error.errors) {
+          const serverErrors: FormErrors = {};
+          
+          Object.entries(error.errors).forEach(([field, messages]) => {
+            if (Array.isArray(messages) && messages.length > 0) {
+              serverErrors[field as keyof FormErrors] = messages[0];
+            }
+          });
+          
+          setErrors(serverErrors);
+        } else {
+          setErrors({
+            ...errors,
+            submit: errorMessage
+          });
+        }
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Если успешно
-  if (isSuccess) {
+  // Обработчик верификации email
+  const handleVerify = async (code: string) => {
+    try {
+      const response = await verifyEmail(formData.email, code);
+      
+      // Проверяем успешность верификации
+      // Сервер может вернуть либо { success: true }, либо напрямую объект пользователя
+      const isSuccess = response.success === true || 
+                        ((response as any).id && (response as any).email);
+      
+      if (isSuccess) {
+        // После успешной верификации перенаправляем на dashboard
+        // Задержка позволяет показать сообщение об успехе
+        setTimeout(() => {
+          navigate('/dashboard');
+        }, 2000);
+        
+        return { success: true };
+      } else {
+        return { 
+          success: false, 
+          message: 'Неверный код подтверждения. Проверьте код и попробуйте еще раз.' 
+        };
+      }
+    } catch (error: any) {
+      // Обрабатываем ошибки от сервера
+      // По умолчанию для верификации считаем, что код неверный
+      let errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
+      
+      // Обрабатываем различные статусы ошибок
+      if (error.status === 400) {
+        errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
+      } else if (error.status === 404) {
+        errorMessage = 'Код не найден или истек срок действия. Запросите новый код.';
+      } else if (error.status === 500) {
+        errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
+      } else if (error.status === 0) {
+        // Статус 0 обычно означает CORS ошибку или реальную ошибку сети
+        // Но для верификации скорее всего это неверный код (CORS блокирует ответ)
+        errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
+      } else if (error.message && !error.message.toLowerCase().includes('failed to fetch')) {
+        // Используем сообщение от сервера, если это не ошибка сети
+        errorMessage = error.message;
+      }
+      
+      if (error.errors) {
+        return {
+          success: false,
+          errors: error.errors,
+          message: errorMessage
+        };
+      }
+      
+      return {
+        success: false,
+        message: errorMessage
+      };
+    }
+  };
+
+  // Обработчик повторной отправки кода
+  const handleResendCode = async () => {
+    return await resendVerificationCode(formData.email);
+  };
+
+  // Обработчик возврата к форме регистрации
+  const handleBackToRegistration = () => {
+    setShowVerificationForm(false);
+    setErrors({});
+  };
+
+  // Если нужно показать форму верификации, показываем её независимо от состояния загрузки
+  // Это важно, чтобы форма не исчезала во время загрузки
+  if (showVerificationForm) {
     return (
-      <div className={styles.registration}>
-        <h2 className={styles.title}>Регистрация завершена!</h2>
-        <div className={styles.successMessage}>
-          <p>✅ Ваша учетная запись успешно создана.</p>
-          <p>На ваш email отправлено письмо с подтверждением.</p>
-        </div>
-      </div>
+      <EmailVerificationForm
+        email={formData.email}
+        onVerify={handleVerify}
+        onResendCode={handleResendCode}
+        onBack={handleBackToRegistration}
+      />
     );
   }
 
   return (
-    <div className={styles.registration}>
-      <h2 className={styles.title}>Регистрация в CRM для юристов</h2>
-      <p className={styles.subtitle}>
-        Создайте аккаунт для управления делами и клиентами
-      </p>
-      
+    <div className={styles.registrationForm}>
       <form className={styles.form} onSubmit={handleSubmit}>
-        {/* Лицензионный номер */}
+        {/* Номер удостоверения */}
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Лицензионный номер адвоката <span className={styles.required}>*</span>
+            Номер удостоверения <span className={styles.required}>*</span>
           </label>
           <input
             type="text"
@@ -261,23 +357,8 @@ const RegistrationForm: React.FC = () => {
           {errors.license_id && <span className={styles.error}>{errors.license_id}</span>}
         </div>
         
-        {/* Имя, Фамилия, Отчество в одной строке */}
+        {/* Фамилия, Имя, Отчество в одной строке */}
         <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>
-              Имя <span className={styles.required}>*</span>
-            </label>
-            <input
-              type="text"
-              name="first_name"
-              value={formData.first_name}
-              onChange={handleInputChange}
-              placeholder="Иван"
-              className={`${styles.input} ${errors.first_name ? styles.inputError : ''}`}
-            />
-            {errors.first_name && <span className={styles.error}>{errors.first_name}</span>}
-          </div>
-          
           <div className={styles.formGroup}>
             <label className={styles.label}>
               Фамилия <span className={styles.required}>*</span>
@@ -292,39 +373,38 @@ const RegistrationForm: React.FC = () => {
             />
             {errors.last_name && <span className={styles.error}>{errors.last_name}</span>}
           </div>
+          
+          <div className={styles.formGroup}>
+            <label className={styles.label}>
+              Имя <span className={styles.required}>*</span>
+            </label>
+            <input
+              type="text"
+              name="first_name"
+              value={formData.first_name}
+              onChange={handleInputChange}
+              placeholder="Иван"
+              className={`${styles.input} ${errors.first_name ? styles.inputError : ''}`}
+            />
+            {errors.first_name && <span className={styles.error}>{errors.first_name}</span>}
+          </div>
         </div>
         
-        {/* Отчество */}
-        <div className={styles.formGroup}>
-          <label className={styles.label}>
-            Отчество
-          </label>
-          <input
-            type="text"
-            name="patronymic"
-            value={formData.patronymic}
-            onChange={handleInputChange}
-            placeholder="Сергеевич"
-            className={`${styles.input} ${errors.patronymic ? styles.inputError : ''}`}
-          />
-          {errors.patronymic && <span className={styles.error}>{errors.patronymic}</span>}
-        </div>
-        
-        {/* Контакты в одной строке */}
+        {/* Отчество и Телефон в одной строке */}
         <div className={styles.row}>
           <div className={styles.formGroup}>
             <label className={styles.label}>
-              Email <span className={styles.required}>*</span>
+              Отчество
             </label>
             <input
-              type="email"
-              name="email"
-              value={formData.email}
+              type="text"
+              name="patronymic"
+              value={formData.patronymic}
               onChange={handleInputChange}
-              placeholder="ivan@example.com"
-              className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
+              placeholder="Сергеевич"
+              className={`${styles.input} ${errors.patronymic ? styles.inputError : ''}`}
             />
-            {errors.email && <span className={styles.error}>{errors.email}</span>}
+            {errors.patronymic && <span className={styles.error}>{errors.patronymic}</span>}
           </div>
           
           <div className={styles.formGroup}>
@@ -341,6 +421,22 @@ const RegistrationForm: React.FC = () => {
             />
             {errors.phone && <span className={styles.error}>{errors.phone}</span>}
           </div>
+        </div>
+        
+        {/* Email */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            Email <span className={styles.required}>*</span>
+          </label>
+          <input
+            type="email"
+            name="email"
+            value={formData.email}
+            onChange={handleInputChange}
+            placeholder="ivan@example.com"
+            className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
+          />
+          {errors.email && <span className={styles.error}>{errors.email}</span>}
         </div>
         
         {/* Telegram */}
@@ -361,42 +457,79 @@ const RegistrationForm: React.FC = () => {
           )}
         </div>
         
-        {/* Пароли в одной строке */}
-        <div className={styles.row}>
-          <div className={styles.formGroup}>
-            <label className={styles.label}>
-              Пароль <span className={styles.required}>*</span>
-            </label>
+        {/* Пароль */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            Пароль <span className={styles.required}>*</span>
+          </label>
+          <div className={styles.inputWrapper}>
             <input
-              type="password"
+              type={showPassword ? "text" : "password"}
               name="password"
               value={formData.password}
               onChange={handleInputChange}
               placeholder="SecurePass123!"
               className={`${styles.input} ${errors.password ? styles.inputError : ''}`}
             />
-            {errors.password && <span className={styles.error}>{errors.password}</span>}
-            <div className={styles.passwordHint}>
-              Минимум 8 символов, заглавная и строчная буквы, цифра, спецсимвол
-            </div>
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowPassword(!showPassword)}
+              title={showPassword ? "Скрыть пароль" : "Показать пароль"}
+            >
+              {showPassword ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17.94 17.94C16.2306 19.243 14.1491 19.9649 12 20C5 20 1 12 1 12C2.24389 9.68192 3.96914 7.65663 6.06 6.06M9.9 4.24C10.5883 4.0789 11.2931 3.99836 12 4C19 4 23 12 23 12C22.393 13.1356 21.6691 14.2048 20.84 15.19M14.12 14.12C13.8454 14.4148 13.5141 14.6512 13.1462 14.8151C12.7782 14.9791 12.3809 15.0673 11.9781 15.0744C11.5753 15.0815 11.1751 15.0074 10.8016 14.8565C10.4281 14.7056 10.0887 14.4811 9.80385 14.1962C9.51897 13.9113 9.29439 13.572 9.14351 13.1984C8.99262 12.8249 8.91853 12.4247 8.92563 12.0219C8.93274 11.6191 9.02091 11.2218 9.18488 10.8538C9.34884 10.4859 9.58525 10.1546 9.88 9.88M1 1L23 23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
           </div>
-          
-          <div className={styles.formGroup}>
-            <label className={styles.label}>
-              Подтвердите пароль <span className={styles.required}>*</span>
-            </label>
+          {errors.password && <span className={styles.error}>{errors.password}</span>}
+          <div className={styles.passwordHint}>
+            Минимум 8 символов, заглавная и строчная буквы, цифра, спецсимвол
+          </div>
+        </div>
+        
+        {/* Подтвердите пароль */}
+        <div className={styles.formGroup}>
+          <label className={styles.label}>
+            Подтвердите пароль <span className={styles.required}>*</span>
+          </label>
+          <div className={styles.inputWrapper}>
             <input
-              type="password"
+              type={showConfirmPassword ? "text" : "password"}
               name="confirm_password"
               value={formData.confirm_password}
               onChange={handleInputChange}
               placeholder="Повторите пароль"
               className={`${styles.input} ${errors.confirm_password ? styles.inputError : ''}`}
             />
-            {errors.confirm_password && (
-              <span className={styles.error}>{errors.confirm_password}</span>
-            )}
+            <button
+              type="button"
+              className={styles.passwordToggle}
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              title={showConfirmPassword ? "Скрыть пароль" : "Показать пароль"}
+            >
+              {showConfirmPassword ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17.94 17.94C16.2306 19.243 14.1491 19.9649 12 20C5 20 1 12 1 12C2.24389 9.68192 3.96914 7.65663 6.06 6.06M9.9 4.24C10.5883 4.0789 11.2931 3.99836 12 4C19 4 23 12 23 12C22.393 13.1356 21.6691 14.2048 20.84 15.19M14.12 14.12C13.8454 14.4148 13.5141 14.6512 13.1462 14.8151C12.7782 14.9791 12.3809 15.0673 11.9781 15.0744C11.5753 15.0815 11.1751 15.0074 10.8016 14.8565C10.4281 14.7056 10.0887 14.4811 9.80385 14.1962C9.51897 13.9113 9.29439 13.572 9.14351 13.1984C8.99262 12.8249 8.91853 12.4247 8.92563 12.0219C8.93274 11.6191 9.02091 11.2218 9.18488 10.8538C9.34884 10.4859 9.58525 10.1546 9.88 9.88M1 1L23 23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
+            </button>
           </div>
+          {errors.confirm_password && (
+            <span className={styles.error}>{errors.confirm_password}</span>
+          )}
         </div>
         
         {/* Согласие с условиями */}
@@ -434,10 +567,6 @@ const RegistrationForm: React.FC = () => {
           >
             {isActuallySubmitting ? 'Регистрация...' : 'Зарегистрироваться'}
           </button>
-
-          <p className={styles.loginLink}>
-            Уже есть аккаунт? <a href="/login">Войти</a>
-          </p>
         </div>
       </form>
     </div>

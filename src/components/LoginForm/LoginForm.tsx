@@ -1,6 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import styles from './LoginForm.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
+import ForgotPasswordForm from '../ForgotPasswordForm/ForgotPasswordForm';
 
 // Типы для формы
 interface LoginFormData {
@@ -18,7 +20,8 @@ interface LoginFormErrors {
 
 const LoginForm: React.FC = () => {
   // Хук аутентификации
-  const { login, isLoading: authLoading } = useAuth();
+  const { login, isLoading: authLoading, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
 
   // Состояние формы
   const [formData, setFormData] = useState<LoginFormData>({
@@ -33,10 +36,24 @@ const LoginForm: React.FC = () => {
   // Состояния UI
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [showForgotPassword, setShowForgotPassword] = useState(false);
 
   // Комбинированное состояние загрузки
   const isActuallySubmitting = isSubmitting || authLoading;
+
+  // Отслеживаем изменения isAuthenticated для автоматической навигации
+  useEffect(() => {
+    console.log('LoginForm useEffect - isAuthenticated:', isAuthenticated, 'isActuallySubmitting:', isActuallySubmitting, 'authLoading:', authLoading);
+    if (isAuthenticated) {
+      console.log('User authenticated, navigating to dashboard');
+      // Используем небольшую задержку для гарантии, что состояние обновилось
+      const timer = setTimeout(() => {
+        navigate('/dashboard', { replace: true });
+      }, 200);
+      
+      return () => clearTimeout(timer);
+    }
+  }, [isAuthenticated, navigate]);
 
   // Обработчик изменения полей
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -78,7 +95,7 @@ const LoginForm: React.FC = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Обработчик отправки формы с реальным API
+  // Обработчик отправки формы
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -89,27 +106,28 @@ const LoginForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      // Используем login из AuthContext (не register!)
       const response = await login(formData.email, formData.password);
       
-      if (response.success) {
-        // Успешный вход
-        setIsSuccess(true);
-        console.log('Вход выполнен успешно!', response.data);
-        
-        // Перенаправление на dashboard
-        setTimeout(() => {
-          window.location.href = '/dashboard';
-        }, 1000);
+      // Проверяем успешность входа
+      // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект с токенами
+      const isSuccess = response.success === true || 
+                        (response as any).access_token || 
+                        (response as any).access ||
+                        ((response as any).token && (response as any).email);
+      
+      if (isSuccess) {
+        console.log('Login successful, waiting for authentication state update'); // Для отладки
+        // Не навигируем сразу - useEffect отследит изменение isAuthenticated
+        // и выполнит навигацию автоматически
+        // Это гарантирует, что состояние обновилось перед навигацией
         
       } else {
-        // Обработка ошибок
+        // Обрабатываем ошибки от сервера
         if (response.errors) {
           const serverErrors: LoginFormErrors = {};
           
           Object.entries(response.errors).forEach(([field, messages]) => {
             if (messages && messages.length > 0) {
-              // Используем правильный тип для field
               serverErrors[field as keyof LoginFormErrors] = messages[0];
             }
           });
@@ -120,16 +138,37 @@ const LoginForm: React.FC = () => {
             ...errors,
             submit: response.message
           });
+        } else {
+          setErrors({
+            ...errors,
+            submit: 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.'
+          });
         }
       }
       
     } catch (error: any) {
-      console.error('Ошибка входа:', error);
+      // Улучшенная обработка ошибок
+      let errorMessage = 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.';
       
-      let errorMessage = 'Ошибка входа. Проверьте email и пароль.';
-      
-      if (error.message) {
-        errorMessage = error.message;
+      // Обработка CORS ошибок (status 0)
+      if (error.status === 0) {
+        errorMessage = 'Ошибка подключения к серверу. Проверьте настройки CORS на бэкенде. Убедитесь, что бэкенд разрешает запросы с origin http://localhost:5173';
+      } else if (error.status === 401 || error.status === 403) {
+        errorMessage = 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.';
+      } else if (error.status === 400) {
+        errorMessage = 'Неверный формат данных. Проверьте email и пароль.';
+      } else if (error.status === 429) {
+        errorMessage = 'Слишком много попыток входа. Попробуйте позже.';
+      } else if (error.status === 500) {
+        errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
+      } else if (error.message) {
+        // Проверяем на CORS ошибки в сообщении
+        const msg = error.message.toLowerCase();
+        if (msg.includes('cors') || msg.includes('failed to fetch') || msg.includes('networkerror')) {
+          errorMessage = 'Ошибка подключения к серверу. Проверьте настройки CORS на бэкенде.';
+        } else {
+          errorMessage = error.message;
+        }
       }
       
       if (error.errors) {
@@ -156,48 +195,33 @@ const LoginForm: React.FC = () => {
   // Обработчик "Забыли пароль?"
   const handleForgotPassword = (e: React.MouseEvent) => {
     e.preventDefault();
-    console.log('Переход к восстановлению пароля для:', formData.email);
-    
-    // Здесь обычно: открытие модалки или переход на страницу восстановления
-    alert(`Инструкция по восстановлению пароля отправлена на ${formData.email || 'ваш email'}`);
+    setShowForgotPassword(true);
   };
 
-  // Обработчик "Восстановить аккаунт"
-  const handleRestoreAccount = () => {
-    console.log('Восстановление аккаунта');
-    
-    // Здесь обычно: переход на страницу восстановления/реактивации
-    // window.location.href = '/restore-account';
-    
-    alert('Функция восстановления аккаунта. Свяжитесь с поддержкой: support@legalcrm.com');
+  // Обработчик возврата к форме входа
+  const handleBackToLogin = () => {
+    setShowForgotPassword(false);
   };
 
-  // Если успешно
-  if (isSuccess) {
+  // Обработчик успешного восстановления пароля
+  const handlePasswordResetSuccess = () => {
+    setShowForgotPassword(false);
+    // Можно показать сообщение об успехе или перенаправить на страницу входа
+  };
+
+  // Если показываем форму восстановления пароля
+  if (showForgotPassword) {
     return (
-      <div className={styles.login}>
-        <div className={styles.header}>
-          <h2 className={styles.title}>Добро пожаловать!</h2>
-          <p className={styles.subtitle}>Вход выполнен успешно</p>
-        </div>
-        
-        <div className={styles.successMessage}>
-          <p>✅ Вы успешно вошли в систему.</p>
-          <p>Перенаправляем в личный кабинет...</p>
-        </div>
-      </div>
+      <ForgotPasswordForm
+        initialEmail={formData.email}
+        onBack={handleBackToLogin}
+        onSuccess={handlePasswordResetSuccess}
+      />
     );
   }
 
   return (
-    <div className={styles.login}>
-      <div className={styles.header}>
-        <h2 className={styles.title}>Вход в CRM</h2>
-        <p className={styles.subtitle}>
-          Введите ваши учетные данные для доступа к системе
-        </p>
-      </div>
-      
+    <div className={styles.loginForm}>
       <form className={styles.form} onSubmit={handleSubmit}>
         {/* Email */}
         <div className={styles.formGroup}>
@@ -238,7 +262,16 @@ const LoginForm: React.FC = () => {
               onClick={() => setShowPassword(!showPassword)}
               title={showPassword ? "Скрыть пароль" : "Показать пароль"}
             >
-              {showPassword ? "👁️" : "👁️‍🗨️"}
+              {showPassword ? (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M1 12C1 12 5 4 12 4C19 4 23 12 23 12C23 12 19 20 12 20C5 20 1 12 1 12Z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                  <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              ) : (
+                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M17.94 17.94C16.2306 19.243 14.1491 19.9649 12 20C5 20 1 12 1 12C2.24389 9.68192 3.96914 7.65663 6.06 6.06M9.9 4.24C10.5883 4.0789 11.2931 3.99836 12 4C19 4 23 12 23 12C22.393 13.1356 21.6691 14.2048 20.84 15.19M14.12 14.12C13.8454 14.4148 13.5141 14.6512 13.1462 14.8151C12.7782 14.9791 12.3809 15.0673 11.9781 15.0744C11.5753 15.0815 11.1751 15.0074 10.8016 14.8565C10.4281 14.7056 10.0887 14.4811 9.80385 14.1962C9.51897 13.9113 9.29439 13.572 9.14351 13.1984C8.99262 12.8249 8.91853 12.4247 8.92563 12.0219C8.93274 11.6191 9.02091 11.2218 9.18488 10.8538C9.34884 10.4859 9.58525 10.1546 9.88 9.88M1 1L23 23" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
+                </svg>
+              )}
             </button>
           </div>
           
@@ -288,27 +321,6 @@ const LoginForm: React.FC = () => {
           </button>
         </div>
       </form>
-      
-      {/* Разделитель */}
-      <div className={styles.divider}>
-        <span>или</span>
-      </div>
-      
-      {/* Кнопка восстановления аккаунта */}
-      <div className={styles.buttons}>
-        <button
-          type="button"
-          className={styles.restoreAccountButton}
-          onClick={handleRestoreAccount}
-        >
-          Восстановить аккаунт
-        </button>
-      </div>
-      
-      {/* Ссылка на регистрацию */}
-      <div className={styles.registerLink}>
-        Нет аккаунта? <a href="/register">Зарегистрироваться</a>
-      </div>
     </div>
   );
 };
