@@ -824,4 +824,65 @@ export const clientPaymentsApi = {
   },
 };
 
+// Интерфейс для контакта
+export interface Contact {
+  id: number;
+  attorney_id: number;
+  case_id: number;
+  email: string;
+  name: string;
+  personal_info: string;
+  phone: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Интерфейс для создания контакта
+export interface CreateContactRequest {
+  attorney_id: number;
+  case_id: number;
+  email: string;
+  name: string;
+  personal_info: string;
+  phone: string;
+}
+
+// Интерфейс для обновления контакта
+export interface UpdateContactRequest {
+  attorney_id?: number;
+  case_id?: number;
+  email?: string;
+  name?: string;
+  personal_info?: string;
+  phone?: string;
+}
+
+// API для работы с контактами
+export const contactsApi = {
+  // Получение списка контактов
+  async getContacts(): Promise<Contact[]> {
+    return apiClient.request<Contact[]>('/contacts', 'GET');
+  },
+  
+  // Получение конкретного контакта
+  async getContact(contactId: number): Promise<Contact> {
+    return apiClient.request<Contact>(`/contacts/${contactId}`, 'GET');
+  },
+  
+  // Создание контакта
+  async createContact(data: CreateContactRequest): Promise<Contact> {
+    return apiClient.request<Contact>('/contacts', 'POST', data);
+  },
+  
+  // Обновление контакта
+  async updateContact(contactId: number, data: UpdateContactRequest): Promise<Contact> {
+    return apiClient.request<Contact>(`/contacts/${contactId}`, 'PUT', data);
+  },
+  
+  // Удаление контакта
+  async deleteContact(contactId: number): Promise<{ success: boolean; message?: string }> {
+    return apiClient.request<{ success: boolean; message?: string }>(`/contacts/${contactId}`, 'DELETE');
+  },
+};
+
 export default apiClient;
