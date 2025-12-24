@@ -1,4 +1,5 @@
 import React from "react";
+import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './Header.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -14,23 +15,45 @@ const Header: React.FC<HeaderProps> = ({
   onShowLogin 
 }) => {
   const { user, isAuthenticated, logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const isLandingPage = location.pathname === '/' || location.pathname === '/home';
   
   const handleLogout = async () => {
     await logout();
-    if (onShowHero) {
-      onShowHero();
-    }
+    navigate('/home');
   };
 
   const handleLogoClick = () => {
-    console.log('Logo clicked');
-    if (onShowHero) {
-      onShowHero();
+    if (isLandingPage) {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    } else {
+      navigate('/home');
+    }
+  };
+
+  const handleNavClick = (e: React.MouseEvent<HTMLAnchorElement>, sectionId: string) => {
+    e.preventDefault();
+    if (isLandingPage) {
+      const section = document.getElementById(sectionId);
+      if (section) {
+        section.scrollIntoView({ behavior: 'smooth' });
+      }
+    } else {
+      navigate(`/home#${sectionId}`);
+    }
+  };
+
+  const handleCRMClick = () => {
+    if (isAuthenticated) {
+      navigate('/dashboard');
+    } else {
+      navigate('/login');
     }
   };
 
   return (
-    <header className={styles.header}>
+    <header className={`${styles.header} ${isLandingPage ? styles.landingHeader : ''}`}>
       
       {/* Логотип */}
       <img 
@@ -44,46 +67,57 @@ const Header: React.FC<HeaderProps> = ({
       {/* Навигация */}
       <nav className={styles.navbar}>
         <ul>
-          <li><a href="#overview" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>Возможности</a></li>
-          <li><a href="#features" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>Продукт</a></li>
-          <li><a href="#pricing" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>Тарифы</a></li>
-          <li><a href="#forwhom" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>Для кого</a></li>
-          <li><a href="#about" onClick={(e) => { e.preventDefault(); onShowHero?.(); }}>О нас</a></li>
+          <li><a href="#overview" onClick={(e) => handleNavClick(e, 'overview')}>Обзор</a></li>
+          <li><a href="#features" onClick={(e) => handleNavClick(e, 'features')}>Функции</a></li>
+          <li><a href="#pricing" onClick={(e) => handleNavClick(e, 'pricing')}>Цены</a></li>
+          <li><a href="#forwhom" onClick={(e) => handleNavClick(e, 'forwhom')}>Для кого</a></li>
+          <li><a href="#about" onClick={(e) => handleNavClick(e, 'about')}>О нас</a></li>
+          <li><a href="#contacts" onClick={(e) => handleNavClick(e, 'contacts')}>Контакты</a></li>
+          <li>
+            <button 
+              className={styles.crmButton}
+              onClick={handleCRMClick}
+            >
+              CRM
+            </button>
+          </li>
         </ul>
       </nav>
       
-      {/* Кнопки авторизации */}
-      <div className={styles.auth}>
-        {isAuthenticated ? (
-          <>
-            <span className={styles.userGreeting}>
-              Привет, {user?.first_name}!
-            </span>
-            <button 
-              className={`${styles.button} ${styles.signOut}`}
-              onClick={handleLogout}
-            >
-              Выйти
-            </button>
-          </>
-        ) : (
-          <>
-            <button 
-              className={`${styles.button} ${styles.signIn}`}
-              onClick={onShowLogin}
-            >
-              Войти
-            </button>
-            
-            <button 
-              className={`${styles.button} ${styles.signUp}`}
-              onClick={onShowRegister}
-            >
-              Регистрация
-            </button>
-          </>
-        )}
-      </div>
+      {/* Кнопки авторизации - только не на лендинге */}
+      {!isLandingPage && (
+        <div className={styles.auth}>
+          {isAuthenticated ? (
+            <>
+              <span className={styles.userGreeting}>
+                Привет, {user?.first_name}!
+              </span>
+              <button 
+                className={`${styles.button} ${styles.signOut}`}
+                onClick={handleLogout}
+              >
+                Выйти
+              </button>
+            </>
+          ) : (
+            <>
+              <button 
+                className={`${styles.button} ${styles.signIn}`}
+                onClick={() => navigate('/login')}
+              >
+                Войти
+              </button>
+              
+              <button 
+                className={`${styles.button} ${styles.signUp}`}
+                onClick={() => navigate('/register')}
+              >
+                Регистрация
+              </button>
+            </>
+          )}
+        </div>
+      )}
     </header>
   );
 };
