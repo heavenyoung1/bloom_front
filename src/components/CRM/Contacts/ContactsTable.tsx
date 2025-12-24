@@ -1,67 +1,70 @@
 import React, { useState, useEffect } from 'react';
 import { FiSearch } from 'react-icons/fi';
-import { clientsApi } from '../../../services/api';
-import type { Client } from '../../../services/api';
-import CreateClientForm from './CreateClientForm';
-import ClientDetails from './ClientDetails';
-import styles from './ClientsTable.module.scss';
+import { contactsApi, casesApi } from '../../../services/api';
+import type { Contact, Case } from '../../../services/api';
+import CreateContactForm from './CreateContactForm';
+import ContactDetails from './ContactDetails';
+import styles from './ContactsTable.module.scss';
 
-const ClientsTable: React.FC = () => {
-  const [clients, setClients] = useState<Client[]>([]);
+const ContactsTable: React.FC = () => {
+  const [contacts, setContacts] = useState<Contact[]>([]);
+  const [cases, setCases] = useState<Case[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const [selectedClientId, setSelectedClientId] = useState<number | null>(null);
+  const [selectedContactId, setSelectedContactId] = useState<number | null>(null);
   const itemsPerPage = 8;
 
-  const fetchClients = async () => {
+  const fetchContacts = async () => {
     try {
       setLoading(true);
       setError(null);
-      const data = await clientsApi.getClients();
-      setClients(data);
+      const data = await contactsApi.getContacts();
+      setContacts(data);
     } catch (err: any) {
-      console.error('Ошибка загрузки клиентов:', err);
-      setError(err.message || 'Не удалось загрузить клиентов');
+      console.error('Ошибка загрузки контактов:', err);
+      setError(err.message || 'Не удалось загрузить контакты');
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchCases = async () => {
+    try {
+      const data = await casesApi.getCases();
+      setCases(data);
+    } catch (err: any) {
+      console.error('Ошибка загрузки дел:', err);
+    }
+  };
+
   useEffect(() => {
-    fetchClients();
+    fetchContacts();
+    fetchCases();
   }, []);
 
-  const filteredClients = clients.filter((client) =>
-    client.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    client.phone.includes(searchQuery)
+  const getCaseName = (caseId: number): string => {
+    const caseItem = cases.find((c) => c.id === caseId);
+    return caseItem ? caseItem.name : `Дело #${caseId}`;
+  };
+
+  const filteredContacts = contacts.filter((contact) =>
+    contact.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    contact.phone.includes(searchQuery)
   );
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const displayedClients = filteredClients.slice(startIndex, endIndex);
-  const totalPages = Math.ceil(filteredClients.length / itemsPerPage);
-
-  const getMessengerIcon = (messenger: string) => {
-    switch (messenger.toLowerCase()) {
-      case 'telegram':
-        return '✈️';
-      case 'whatsapp':
-        return '💬';
-      case 'viber':
-        return '💜';
-      default:
-        return '📱';
-    }
-  };
+  const displayedContacts = filteredContacts.slice(startIndex, endIndex);
+  const totalPages = Math.ceil(filteredContacts.length / itemsPerPage);
 
   if (loading) {
     return (
       <div className={styles.tableContainer}>
-        <div className={styles.loading}>Загрузка клиентов...</div>
+        <div className={styles.loading}>Загрузка контактов...</div>
       </div>
     );
   }
@@ -78,8 +81,8 @@ const ClientsTable: React.FC = () => {
     <div className={styles.tableContainer}>
       <div className={styles.tableHeader}>
         <div className={styles.titleSection}>
-          <h2 className={styles.title}>Все клиенты</h2>
-          <p className={styles.subtitle}>Активные клиенты ({filteredClients.length})</p>
+          <h2 className={styles.title}>Все контакты</h2>
+          <p className={styles.subtitle}>Активные контакты ({filteredContacts.length})</p>
         </div>
         <div className={styles.controls}>
           <div className={styles.search}>
@@ -99,14 +102,14 @@ const ClientsTable: React.FC = () => {
             className={styles.createButton}
             onClick={() => setShowCreateForm(true)}
           >
-            + Создать клиента
+            + Создать контакт
           </button>
         </div>
       </div>
 
-      {filteredClients.length === 0 ? (
+      {filteredContacts.length === 0 ? (
         <div className={styles.empty}>
-          {searchQuery ? 'Клиенты не найдены' : 'Нет клиентов'}
+          {searchQuery ? 'Контакты не найдены' : 'Нет контактов'}
         </div>
       ) : (
         <>
@@ -117,32 +120,22 @@ const ClientsTable: React.FC = () => {
                   <th>Имя</th>
                   <th>Email</th>
                   <th>Телефон</th>
-                  <th>Мессенджер</th>
-                  <th>Никнейм</th>
+                  <th>Дело</th>
+                  <th>Личные данные</th>
                 </tr>
               </thead>
               <tbody>
-                {displayedClients.map((client) => (
+                {displayedContacts.map((contact) => (
                   <tr 
-                    key={client.id}
-                    onClick={() => setSelectedClientId(client.id)}
+                    key={contact.id}
+                    onClick={() => setSelectedContactId(contact.id)}
                     className={styles.tableRow}
                   >
-                    <td className={styles.nameCell}>{client.name}</td>
-                    <td>{client.email}</td>
-                    <td>{client.phone}</td>
-                    <td>
-                      <span className={styles.messenger}>
-                        {getMessengerIcon(client.messenger)} {client.messenger}
-                      </span>
-                    </td>
-                    <td>
-                      {client.messenger_handle ? (
-                        <span className={styles.handle}>@{client.messenger_handle}</span>
-                      ) : (
-                        <span className={styles.noHandle}>—</span>
-                      )}
-                    </td>
+                    <td className={styles.nameCell}>{contact.name}</td>
+                    <td>{contact.email}</td>
+                    <td>{contact.phone}</td>
+                    <td>{getCaseName(contact.case_id)}</td>
+                    <td>{contact.personal_info || '—'}</td>
                   </tr>
                 ))}
               </tbody>
@@ -152,8 +145,8 @@ const ClientsTable: React.FC = () => {
           {totalPages > 1 && (
             <div className={styles.pagination}>
               <div className={styles.paginationInfo}>
-                Показано {startIndex + 1} - {Math.min(endIndex, filteredClients.length)} из{' '}
-                {filteredClients.length} записей
+                Показано {startIndex + 1} - {Math.min(endIndex, filteredContacts.length)} из{' '}
+                {filteredContacts.length} записей
               </div>
               <div className={styles.paginationControls}>
                 <button
@@ -211,25 +204,25 @@ const ClientsTable: React.FC = () => {
       )}
 
       {showCreateForm && (
-        <CreateClientForm
+        <CreateContactForm
           onClose={() => setShowCreateForm(false)}
           onSuccess={() => {
-            fetchClients();
+            fetchContacts();
             setShowCreateForm(false);
           }}
         />
       )}
 
-      {selectedClientId && (
-        <ClientDetails
-          clientId={selectedClientId}
-          onClose={() => setSelectedClientId(null)}
+      {selectedContactId && (
+        <ContactDetails
+          contactId={selectedContactId}
+          onClose={() => setSelectedContactId(null)}
           onUpdate={() => {
-            fetchClients();
+            fetchContacts();
           }}
           onDelete={() => {
-            fetchClients();
-            setSelectedClientId(null);
+            fetchContacts();
+            setSelectedContactId(null);
           }}
         />
       )}
@@ -237,5 +230,5 @@ const ClientsTable: React.FC = () => {
   );
 };
 
-export default ClientsTable;
+export default ContactsTable;
 

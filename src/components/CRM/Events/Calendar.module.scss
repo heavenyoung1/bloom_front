@@ -66,7 +66,7 @@
 
 .createButton {
   padding: 12px 24px;
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
   border: none;
   border-radius: 8px;
@@ -77,7 +77,7 @@
   white-space: nowrap;
 
   &:hover {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 
   &:active {
@@ -102,7 +102,7 @@
   align-items: center;
   margin-bottom: 24px;
   padding: 16px;
-  background: #f9fafb;
+  background: #ECEBF7;
   border-radius: 8px;
 }
 
@@ -122,8 +122,8 @@
 
   &:hover {
     background: #f3f4f6;
-    border-color: #8b5cf6;
-    color: #8b5cf6;
+    border-color: #6F88FC;
+    color: #6F88FC;
   }
 
   &:active {
@@ -157,8 +157,8 @@
 
   &:hover {
     background: #f3f4f6;
-    border-color: #8b5cf6;
-    color: #8b5cf6;
+    border-color: #6F88FC;
+    color: #6F88FC;
   }
 }
 
@@ -173,7 +173,7 @@
 }
 
 .weekDayHeader {
-  background: #f9fafb;
+  background: #ECEBF7;
   padding: 12px;
   text-align: center;
   font-size: 12px;
@@ -193,11 +193,11 @@
   transition: background-color 0.2s;
 
   &:hover:not(.emptyDay) {
-    background: #f9fafb;
+    background: #ECEBF7;
   }
 
   &.emptyDay {
-    background: #f9fafb;
+    background: #ECEBF7;
     cursor: default;
   }
 
@@ -205,7 +205,7 @@
     background: #fef3c7;
 
     .dayNumber {
-      background: #8b5cf6;
+      background: #6F88FC;
       color: white;
     }
   }
@@ -287,7 +287,7 @@
 .eventType_deadline {
   background: #fce7f3;
   color: #9f1239;
-  border-left: 3px solid #ec4899;
+  border-left: 3px solid #5d75e8;
 }
 
 .eventType_important {
@@ -411,7 +411,7 @@
 
   &:focus {
     outline: none;
-    border-color: #8b5cf6;
+    border-color: #6F88FC;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
   }
 
@@ -491,11 +491,11 @@
 }
 
 .submitButton {
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
 
   &:hover:not(:disabled) {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 
   &:disabled {

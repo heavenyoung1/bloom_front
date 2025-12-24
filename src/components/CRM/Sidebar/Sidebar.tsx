@@ -1,29 +1,48 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useRef, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import styles from './Sidebar.module.scss';
+import CaseOneLogo from './CaseOneLogo';
+import {
+  FiBarChart2,
+  FiBriefcase,
+  FiUsers,
+  FiPhone,
+  FiCalendar,
+  FiCreditCard,
+  FiZap,
+  FiHelpCircle,
+  FiSettings,
+  FiUser,
+  FiLogOut,
+  FiChevronRight,
+  FiChevronLeft,
+  FiChevronUp,
+  FiChevronDown,
+} from 'react-icons/fi';
+import C1Logo from './C1Logo';
 
 interface NavItem {
   id: string;
   label: string;
-  icon: string;
+  icon: ReactNode;
   path: string;
   isDivider?: boolean;
 }
 
 const navItems: NavItem[] = [
-  { id: 'dashboard', label: 'Дашборд', icon: '📊', path: '/dashboard' },
-  { id: 'cases', label: 'Дела', icon: '📁', path: '/cases' },
-  { id: 'clients', label: 'Клиенты', icon: '👥', path: '/clients' },
-  { id: 'contacts', label: 'Контакты', icon: '📇', path: '/contacts' },
-  { id: 'calendar', label: 'Календарь', icon: '📅', path: '/calendar' },
-  { id: 'payments', label: 'Платежи', icon: '💳', path: '/payments' },
-  { id: 'assistant', label: 'Универсальный помощник юриста', icon: '🤖', path: '/assistant' },
-  { id: 'divider1', label: '', icon: '', path: '', isDivider: true },
-  { id: 'help', label: 'Поддержка', icon: '❓', path: '/help' },
-  { id: 'settings', label: 'Настройки', icon: '⚙️', path: '/settings' },
-  { id: 'divider2', label: '', icon: '', path: '', isDivider: true },
-  { id: 'profile', label: 'Личный кабинет', icon: '👤', path: '/profile' },
+  { id: 'dashboard', label: 'Дашборд', icon: <FiBarChart2 />, path: '/dashboard' },
+  { id: 'cases', label: 'Дела', icon: <FiBriefcase />, path: '/cases' },
+  { id: 'clients', label: 'Клиенты', icon: <FiUsers />, path: '/clients' },
+  { id: 'contacts', label: 'Контакты', icon: <FiPhone />, path: '/contacts' },
+  { id: 'calendar', label: 'Календарь', icon: <FiCalendar />, path: '/calendar' },
+  { id: 'payments', label: 'Платежи', icon: <FiCreditCard />, path: '/payments' },
+  { id: 'assistant', label: 'Универсальный помощник юриста', icon: <FiZap />, path: '/assistant' },
+  { id: 'divider1', label: '', icon: <></>, path: '', isDivider: true },
+  { id: 'help', label: 'Поддержка', icon: <FiHelpCircle />, path: '/help' },
+  { id: 'settings', label: 'Настройки', icon: <FiSettings />, path: '/settings' },
+  { id: 'divider2', label: '', icon: <></>, path: '', isDivider: true },
+  { id: 'profile', label: 'Личный кабинет', icon: <FiUser />, path: '/profile' },
 ];
 
 interface SidebarProps {
@@ -70,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
     <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
       {/* Темная секция с иконками */}
       <div className={styles.iconBar}>
-        <div className={styles.logo}>⚡</div>
+        <div className={styles.logo}><C1Logo /></div>
         {navItems
           .filter(item => !item.isDivider)
           .map((item) => (
@@ -89,14 +108,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
           onClick={onToggle}
           title={isCollapsed ? 'Развернуть меню' : 'Свернуть меню'}
         >
-          {isCollapsed ? '→' : '←'}
+          {isCollapsed ? <FiChevronRight /> : <FiChevronLeft />}
         </button>
       </div>
 
       {/* Белая панель с навигацией */}
       <div className={`${styles.navPanel} ${isCollapsed ? styles.collapsed : ''}`}>
         <div className={styles.navHeader}>
-          <h2>Dashboard v.01</h2>
+          <CaseOneLogo />
         </div>
 
         <nav className={styles.nav}>
@@ -118,7 +137,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
                   <>
                     <span className={styles.navLabel}>{item.label}</span>
                     {activeItem.id === item.id && (
-                      <span className={styles.navArrow}>→</span>
+                      <span className={styles.navArrow}><FiChevronRight /></span>
                     )}
                   </>
                 )}
@@ -145,7 +164,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
               className={styles.profileDropdown}
               onClick={() => setIsProfileOpen(!isProfileOpen)}
             >
-              {isProfileOpen ? '▲' : '▼'}
+              {isProfileOpen ? <FiChevronUp /> : <FiChevronDown />}
             </button>
             
             {/* Выпадающее меню */}
@@ -155,7 +174,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
                   className={styles.profileMenuItem}
                   onClick={handleLogout}
                 >
-                  <span className={styles.menuIcon}>🚪</span>
+                  <span className={styles.menuIcon}><FiLogOut /></span>
                   <span>Выйти</span>
                 </button>
               </div>

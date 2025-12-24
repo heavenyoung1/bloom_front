@@ -52,6 +52,9 @@ const Profile: React.FC = () => {
   });
   const [paymentDetailError, setPaymentDetailError] = useState<string | null>(null);
 
+  // Заглушка для подписки PRO
+  const [subscriptionStatus, setSubscriptionStatus] = useState<'active' | 'inactive'>('active');
+
   const { user, logout, updateProfile, checkAuth } = useAuth();
   const navigate = useNavigate();
 
@@ -235,7 +238,10 @@ const Profile: React.FC = () => {
     try {
       if (paymentDetail) {
         // Обновляем существующую платежную информацию
-        const updated = await paymentDetailApi.updatePaymentDetail(paymentDetail.id, paymentDetailFormData);
+        const updated = await paymentDetailApi.updatePaymentDetail(paymentDetail.id, {
+          ...paymentDetailFormData,
+          attorney_id: user.id,
+        });
         setPaymentDetail(updated);
         setIsEditingPaymentDetail(false);
       } else {
@@ -298,6 +304,25 @@ const Profile: React.FC = () => {
               <span className={styles.logoutIcon}>🚪</span>
               <span>Выйти</span>
             </button>
+          </div>
+
+          {/* Плашка подписки PRO */}
+          <div className={`${styles.subscriptionBanner} ${subscriptionStatus === 'active' ? styles.subscriptionActive : styles.subscriptionInactive}`}>
+            <div className={styles.subscriptionContent}>
+              <div className={styles.subscriptionIcon}>
+                {subscriptionStatus === 'active' ? '⭐' : '🔒'}
+              </div>
+              <div className={styles.subscriptionText}>
+                <span className={styles.subscriptionTitle}>
+                  {subscriptionStatus === 'active' ? 'Подписка PRO активна' : 'Подписка не активна'}
+                </span>
+                {subscriptionStatus === 'active' && (
+                  <span className={styles.subscriptionSubtitle}>
+                    Вы используете все возможности PRO версии
+                  </span>
+                )}
+              </div>
+            </div>
           </div>
           
           <div className={styles.columnsLayout}>

@@ -37,6 +37,12 @@
   justify-content: center;
   font-size: 24px;
   margin-bottom: 10px;
+  color: #6F88FC;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .iconButton {
@@ -53,13 +59,18 @@
   transition: all 0.2s;
   color: #9ca3af;
 
+  svg {
+    width: 20px;
+    height: 20px;
+  }
+
   &:hover {
     background: rgba(255, 255, 255, 0.1);
     color: white;
   }
 
   &.active {
-    background: #8b5cf6;
+    background: #6F88FC;
     color: white;
   }
 }
@@ -79,6 +90,11 @@
   transition: all 0.2s;
   margin-top: auto;
   margin-bottom: 10px;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.2);
@@ -106,15 +122,10 @@
 
 .navHeader {
   margin-bottom: 30px;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   overflow: hidden;
-
-  h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0;
-  }
 }
 
 .nav {
@@ -143,7 +154,7 @@
   }
 
   &.active {
-    background: #8b5cf6;
+    background: #6F88FC;
     color: white;
 
     .navIcon {
@@ -160,6 +171,14 @@
 .navIcon {
   font-size: 18px;
   color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .navLabel {
@@ -169,6 +188,14 @@
 
 .navArrow {
   font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .divider {
@@ -181,7 +208,7 @@
 .upgradeBox {
   margin: 20px 0;
   padding: 20px;
-  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  background: linear-gradient(135deg, #6F88FC 0%, #5d75e8 100%);
   border-radius: 12px;
   color: white;
 }
@@ -201,7 +228,7 @@
 .upgradeButton {
   padding: 8px 16px;
   background: white;
-  color: #8b5cf6;
+  color: #6F88FC;
   border: none;
   border-radius: 6px;
   font-weight: 600;
@@ -238,7 +265,7 @@
   width: 40px;
   height: 40px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  background: linear-gradient(135deg, #6F88FC 0%, #5d75e8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -271,6 +298,14 @@
   font-size: 12px;
   padding: 4px;
   transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 
   &:hover {
     color: #1f2937;
@@ -303,18 +338,31 @@
   font-size: 14px;
   color: #1f2937;
   cursor: pointer;
-  transition: background 0.2s;
+  transition: all 0.2s;
+
+  .menuIcon {
+    color: #6F88FC;
+  }
 
   &:hover {
-    background: #f3f4f6;
+    background: #f0f4ff;
+    color: #6F88FC;
   }
 
   &:active {
-    background: #e5e7eb;
+    background: #e5e9f5;
   }
 }
 
 .menuIcon {
   font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 

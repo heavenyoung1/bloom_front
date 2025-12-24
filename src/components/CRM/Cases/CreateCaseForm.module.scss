@@ -105,7 +105,7 @@
 
   &:focus {
     outline: none;
-    border-color: #8b5cf6;
+    border-color: #6F88FC;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
   }
 
@@ -176,7 +176,7 @@
 .noClients {
   padding: 20px;
   text-align: center;
-  background: #f9fafb;
+  background: #ECEBF7;
   border-radius: 8px;
   border: 1px dashed #e5e7eb;
 
@@ -189,7 +189,7 @@
 
 .createClientButtonInline {
   padding: 8px 16px;
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
   border: none;
   border-radius: 6px;
@@ -199,7 +199,7 @@
   transition: all 0.2s;
 
   &:hover {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 }
 
@@ -246,11 +246,11 @@
 }
 
 .submitButton {
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
 
   &:hover:not(:disabled) {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 
   &:disabled {

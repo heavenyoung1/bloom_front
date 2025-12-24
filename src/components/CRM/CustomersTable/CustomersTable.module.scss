@@ -1,5 +1,5 @@
 .tableContainer {
-  background: #f9fafb;
+  background: #ECEBF7;
   border-radius: 12px;
   padding: 30px;
 }
@@ -38,7 +38,7 @@
 .search {
   display: flex;
   align-items: center;
-  background: #f9fafb;
+  background: #ECEBF7;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   padding: 8px 12px;
@@ -48,7 +48,15 @@
 
 .searchIcon {
   font-size: 16px;
-  color: #9ca3af;
+  color: #6F88FC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .searchInput {
@@ -87,7 +95,7 @@
   outline: none;
 
   &:focus {
-    border-color: #8b5cf6;
+    border-color: #6F88FC;
   }
 }
 
@@ -125,7 +133,7 @@
       transition: background 0.2s;
 
       &:hover {
-        background: #f9fafb;
+        background: #ECEBF7;
       }
 
       &:last-child {
@@ -208,9 +216,9 @@
   }
 
   &.active {
-    background: #8b5cf6;
+    background: #6F88FC;
     color: white;
-    border-color: #8b5cf6;
+    border-color: #6F88FC;
   }
 }
 

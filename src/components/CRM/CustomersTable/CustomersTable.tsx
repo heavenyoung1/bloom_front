@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { FiSearch } from 'react-icons/fi';
 import styles from './CustomersTable.module.scss';
 
 interface Customer {
@@ -88,7 +89,7 @@ const mockCustomers: Customer[] = [
 
 const CustomersTable: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
-  const [sortBy, setSortBy] = useState('Newest');
+  const [sortBy, setSortBy] = useState('по дате (новейшие)');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
   const totalEntries = 256000;
@@ -109,31 +110,29 @@ const CustomersTable: React.FC = () => {
     <div className={styles.tableContainer}>
       <div className={styles.tableHeader}>
         <div className={styles.titleSection}>
-          <h2 className={styles.title}>All Customers</h2>
-          <p className={styles.subtitle}>Active Members</p>
+          <h2 className={styles.title}>Все данные</h2>
         </div>
         <div className={styles.controls}>
           <div className={styles.search}>
-            <span className={styles.searchIcon}>🔍</span>
+            <span className={styles.searchIcon}><FiSearch /></span>
             <input
               type="text"
-              placeholder="Search"
+              placeholder="Поиск"
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className={styles.searchInput}
             />
           </div>
           <div className={styles.sort}>
-            <label htmlFor="sort">Short by:</label>
+            <label htmlFor="sort">Сортировка:</label>
             <select
               id="sort"
               value={sortBy}
               onChange={(e) => setSortBy(e.target.value)}
               className={styles.sortSelect}
             >
-              <option value="Newest">Newest</option>
-              <option value="Oldest">Oldest</option>
-              <option value="Name">Name</option>
+              <option value="по дате (новейшие)">по дате (новейшие)</option>
+              <option value="по названию">по названию</option>
             </select>
           </div>
         </div>

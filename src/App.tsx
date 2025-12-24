@@ -8,6 +8,7 @@ import Cases from './components/CRM/Cases/Cases';
 import Calendar from './components/CRM/Events/Calendar';
 import Profile from './components/CRM/Profile/Profile';
 import Payments from './components/CRM/Payments/Payments';
+import Contacts from './components/CRM/Contacts/Contacts';
 import ProtectedRoute from './components/ProtectedRoute';
 import PublicRoute from './components/PublicRoute';
 import './App.css';
@@ -65,7 +66,7 @@ function App() {
               path="/contacts"
               element={
                 <ProtectedRoute>
-                  <PlaceholderPage title="Контакты" description="Управление контактами" />
+                  <Contacts />
                 </ProtectedRoute>
               }
             />

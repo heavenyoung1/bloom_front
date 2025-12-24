@@ -1,5 +1,5 @@
 .tableContainer {
-  background: #f9fafb;
+  background: #ECEBF7;
   border-radius: 12px;
   padding: 30px;
   width: 100%;
@@ -40,7 +40,7 @@
 
 .createButton {
   padding: 10px 20px;
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
   border: none;
   border-radius: 8px;
@@ -51,7 +51,7 @@
   white-space: nowrap;
 
   &:hover {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 
   &:active {
@@ -72,7 +72,15 @@
 
 .searchIcon {
   font-size: 16px;
-  color: #9ca3af;
+  color: #6F88FC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .searchInput {
@@ -122,7 +130,7 @@
       transition: background 0.2s;
 
       &:hover {
-        background: #f9fafb;
+        background: #ECEBF7;
       }
 
       &:last-child {

@@ -155,11 +155,11 @@
 }
 
 .editButton {
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
 
   &:hover:not(:disabled) {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 
   &:disabled {
@@ -235,7 +235,7 @@
 
   &:focus {
     outline: none;
-    border-color: #8b5cf6;
+    border-color: #6F88FC;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
   }
 }
@@ -310,11 +310,11 @@
 }
 
 .saveButton {
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
 
   &:hover:not(:disabled) {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 
   &:disabled {
@@ -383,7 +383,7 @@
 
 .uploadButton {
   padding: 10px 20px;
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
   border-radius: 8px;
   font-size: 14px;
@@ -395,7 +395,7 @@
   display: inline-block;
 
   &:hover:not(:disabled) {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 
   &:disabled {
@@ -423,7 +423,7 @@
   justify-content: space-between;
   align-items: center;
   padding: 16px;
-  background: #f9fafb;
+  background: #ECEBF7;
   border: 1px solid #e5e7eb;
   border-radius: 8px;
   transition: all 0.2s;

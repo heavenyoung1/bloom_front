@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../Sidebar/Sidebar';
 import DashboardHeader from '../DashboardHeader/DashboardHeader';
-import PaymentsTable from './PaymentsTable';
-import styles from './Payments.module.scss';
+import ContactsTable from './ContactsTable';
+import styles from './Contacts.module.scss';
 
-const Payments: React.FC = () => {
+const Contacts: React.FC = () => {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebarCollapsed');
     return saved ? JSON.parse(saved) : false;
@@ -19,18 +19,15 @@ const Payments: React.FC = () => {
   };
 
   return (
-    <div className={styles.payments}>
+    <div className={styles.contacts}>
       <Sidebar isCollapsed={isSidebarCollapsed} onToggle={toggleSidebar} />
       <div className={`${styles.content} ${isSidebarCollapsed ? styles.sidebarCollapsed : ''}`}>
         <DashboardHeader />
-        <PaymentsTable />
+        <ContactsTable />
       </div>
     </div>
   );
 };
 
-export default Payments;
-
-
-
+export default Contacts;
 

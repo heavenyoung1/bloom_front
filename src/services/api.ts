@@ -673,6 +673,7 @@ export interface CreatePaymentDetailRequest {
 
 // Интерфейс для обновления платежной информации
 export interface UpdatePaymentDetailRequest {
+  attorney_id?: number;
   address?: string;
   bank_account?: string;
   bank_recipient?: string;
@@ -687,27 +688,27 @@ export interface UpdatePaymentDetailRequest {
 export const paymentDetailApi = {
   // Создание платежной информации
   async createPaymentDetail(data: CreatePaymentDetailRequest): Promise<PaymentDetail> {
-    return apiClient.request<PaymentDetail>('/payment-detail/create-payment-detail', 'POST', data);
+    return apiClient.request<PaymentDetail>('/create-payment-detail', 'POST', data);
   },
   
   // Получение платежной информации по ID
   async getPaymentDetail(paymentDetailId: number): Promise<PaymentDetail> {
-    return apiClient.request<PaymentDetail>(`/payment-detail/payment-detail/${paymentDetailId}`, 'GET');
+    return apiClient.request<PaymentDetail>(`/payment-detail/${paymentDetailId}`, 'GET');
   },
   
   // Получение платежной информации по ID юриста
   async getPaymentDetailByAttorney(attorneyId: number): Promise<PaymentDetail> {
-    return apiClient.request<PaymentDetail>(`/payment-detail/payment-detail/attorneys/${attorneyId}`, 'GET');
+    return apiClient.request<PaymentDetail>(`/payment-detail/attorneys/${attorneyId}`, 'GET');
   },
   
   // Обновление платежной информации
   async updatePaymentDetail(paymentDetailId: number, data: UpdatePaymentDetailRequest): Promise<PaymentDetail> {
-    return apiClient.request<PaymentDetail>(`/payment-detail/update-payment-detail/${paymentDetailId}`, 'PUT', data);
+    return apiClient.request<PaymentDetail>(`/update-payment-detail/${paymentDetailId}`, 'PUT', data);
   },
   
   // Удаление платежной информации
   async deletePaymentDetail(paymentDetailId: number): Promise<{ success: boolean; message?: string }> {
-    return apiClient.request<{ success: boolean; message?: string }>(`/payment-detail/delete-payment-detail/${paymentDetailId}`, 'DELETE');
+    return apiClient.request<{ success: boolean; message?: string }>(`/delete-payment-detail/${paymentDetailId}`, 'DELETE');
   },
 };
 
@@ -821,6 +822,67 @@ export const clientPaymentsApi = {
     }
     
     return await response.blob();
+  },
+};
+
+// Интерфейс для контакта
+export interface Contact {
+  id: number;
+  attorney_id: number;
+  case_id: number;
+  email: string;
+  name: string;
+  personal_info: string;
+  phone: string;
+  created_at: string;
+  updated_at: string;
+}
+
+// Интерфейс для создания контакта
+export interface CreateContactRequest {
+  attorney_id: number;
+  case_id: number;
+  email: string;
+  name: string;
+  personal_info: string;
+  phone: string;
+}
+
+// Интерфейс для обновления контакта
+export interface UpdateContactRequest {
+  attorney_id?: number;
+  case_id?: number;
+  email?: string;
+  name?: string;
+  personal_info?: string;
+  phone?: string;
+}
+
+// API для работы с контактами
+export const contactsApi = {
+  // Получение списка контактов
+  async getContacts(): Promise<Contact[]> {
+    return apiClient.request<Contact[]>('/contacts', 'GET');
+  },
+  
+  // Получение конкретного контакта
+  async getContact(contactId: number): Promise<Contact> {
+    return apiClient.request<Contact>(`/contacts/${contactId}`, 'GET');
+  },
+  
+  // Создание контакта
+  async createContact(data: CreateContactRequest): Promise<Contact> {
+    return apiClient.request<Contact>('/contacts', 'POST', data);
+  },
+  
+  // Обновление контакта
+  async updateContact(contactId: number, data: UpdateContactRequest): Promise<Contact> {
+    return apiClient.request<Contact>(`/contacts/${contactId}`, 'PUT', data);
+  },
+  
+  // Удаление контакта
+  async deleteContact(contactId: number): Promise<{ success: boolean; message?: string }> {
+    return apiClient.request<{ success: boolean; message?: string }>(`/contacts/${contactId}`, 'DELETE');
   },
 };
 

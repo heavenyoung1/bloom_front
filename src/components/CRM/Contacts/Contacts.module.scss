@@ -1,4 +1,4 @@
-.dashboard {
+.contacts {
   display: flex;
   width: 100vw;
   height: 100vh;
@@ -32,31 +32,11 @@
   }
 }
 
-.metrics {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 15px;
-  margin-bottom: 30px;
-  background: #ECEBF7;
-  padding: 20px;
-  border-radius: 12px;
-}
-
-@media (max-width: 1200px) {
-  .metrics {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 @media (max-width: 768px) {
   .content {
     margin-left: 0;
     padding: 20px;
     width: 100%;
-  }
-
-  .metrics {
-    grid-template-columns: 1fr;
   }
 }
 

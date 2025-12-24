@@ -28,7 +28,7 @@ export const getStatusColor = (status: string): string => {
     case CaseStatus.IN_PROGRESS:
       return '#f59e0b'; // оранжевый
     case CaseStatus.ON_HOLD:
-      return '#8b5cf6'; // фиолетовый
+      return '#6F88FC'; // голубой
     case CaseStatus.COMPLETED:
       return '#10b981'; // зеленый
     case CaseStatus.CLOSED:
