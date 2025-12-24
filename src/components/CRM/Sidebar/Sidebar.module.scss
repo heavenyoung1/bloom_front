@@ -37,6 +37,12 @@
   justify-content: center;
   font-size: 24px;
   margin-bottom: 10px;
+  color: #8b5cf6;
+
+  svg {
+    width: 24px;
+    height: 24px;
+  }
 }
 
 .iconButton {
@@ -52,6 +58,11 @@
   font-size: 20px;
   transition: all 0.2s;
   color: #9ca3af;
+
+  svg {
+    width: 20px;
+    height: 20px;
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.1);
@@ -79,6 +90,11 @@
   transition: all 0.2s;
   margin-top: auto;
   margin-bottom: 10px;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 
   &:hover {
     background: rgba(255, 255, 255, 0.2);
@@ -160,6 +176,14 @@
 .navIcon {
   font-size: 18px;
   color: #6b7280;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 18px;
+    height: 18px;
+  }
 }
 
 .navLabel {
@@ -169,6 +193,14 @@
 
 .navArrow {
   font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .divider {
@@ -271,6 +303,14 @@
   font-size: 12px;
   padding: 4px;
   transition: color 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 
   &:hover {
     color: #1f2937;
@@ -316,5 +356,13 @@
 
 .menuIcon {
   font-size: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
