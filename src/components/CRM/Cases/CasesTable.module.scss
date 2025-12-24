@@ -69,7 +69,7 @@
 
 .createButton {
   padding: 10px 20px;
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
   border: none;
   border-radius: 8px;
@@ -80,7 +80,7 @@
   white-space: nowrap;
 
   &:hover {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 
   &:active {
@@ -164,7 +164,7 @@
 
 .documentsCount {
   font-weight: 600;
-  color: #8b5cf6;
+  color: #6F88FC;
   font-size: 14px;
 }
 
@@ -244,9 +244,9 @@
   }
 
   &.active {
-    background: #8b5cf6;
+    background: #6F88FC;
     color: white;
-    border-color: #8b5cf6;
+    border-color: #6F88FC;
   }
 }
 

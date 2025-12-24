@@ -105,7 +105,7 @@
 
   &:focus {
     outline: none;
-    border-color: #8b5cf6;
+    border-color: #6F88FC;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
   }
 
@@ -205,11 +205,11 @@
 }
 
 .submitButton {
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
 
   &:hover:not(:disabled) {
-    background: #7c3aed;
+    background: #5d75e8;
   }
 
   &:disabled {

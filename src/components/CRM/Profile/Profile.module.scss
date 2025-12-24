@@ -51,8 +51,8 @@
 }
 
 .subscriptionActive {
-  background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);
-  border-color: #7c3aed;
+  background: linear-gradient(135deg, #6F88FC 0%, #5d75e8 100%);
+  border-color: #5d75e8;
   color: white;
 }
 
@@ -109,7 +109,7 @@
 
 .editButton {
   padding: 10px 21px;
-  background: #8b5cf6;
+  background: #6F88FC;
   color: white;
   border: none;
   border-radius: 8px;
@@ -119,7 +119,7 @@
   transition: all 0.2s;
 
   &:hover {
-    background: #7c3aed;
+    background: #5d75e8;
     transform: translateY(-1px);
     box-shadow: 0 4px 8px rgba(139, 92, 246, 0.3);
   }
@@ -172,7 +172,7 @@
   width: 156px;
   height: 156px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 100%);
+  background: linear-gradient(135deg, #6F88FC 0%, #5d75e8 100%);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -257,7 +257,7 @@
 
   &:focus {
     outline: none;
-    border-color: #8b5cf6;
+    border-color: #6F88FC;
     box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
   }
 
@@ -339,7 +339,7 @@
   justify-content: center;
   gap: 8px;
   padding: 10px 20px;
-  background: #ef4444;
+  background: #6F88FC;
   color: white;
   border: none;
   border-radius: 8px;
@@ -350,9 +350,9 @@
   white-space: nowrap;
 
   &:hover {
-    background: #dc2626;
+    background: #5d75e8;
     transform: translateY(-1px);
-    box-shadow: 0 2px 4px rgba(239, 68, 68, 0.3);
+    box-shadow: 0 2px 4px rgba(111, 136, 252, 0.3);
   }
 
   &:active {
