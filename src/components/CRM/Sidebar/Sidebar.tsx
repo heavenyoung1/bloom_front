@@ -20,6 +20,7 @@ import {
   FiChevronUp,
   FiChevronDown,
 } from 'react-icons/fi';
+import C1Logo from './C1Logo';
 
 interface NavItem {
   id: string;
@@ -88,7 +89,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
     <div className={`${styles.sidebar} ${isCollapsed ? styles.collapsed : ''}`}>
       {/* Темная секция с иконками */}
       <div className={styles.iconBar}>
-        <div className={styles.logo}><FiZap /></div>
+        <div className={styles.logo}><C1Logo /></div>
         {navItems
           .filter(item => !item.isDivider)
           .map((item) => (
