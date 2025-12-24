@@ -102,7 +102,7 @@
   align-items: center;
   margin-bottom: 24px;
   padding: 16px;
-  background: #f9fafb;
+  background: #ECEBF7;
   border-radius: 8px;
 }
 
@@ -173,7 +173,7 @@
 }
 
 .weekDayHeader {
-  background: #f9fafb;
+  background: #ECEBF7;
   padding: 12px;
   text-align: center;
   font-size: 12px;
@@ -193,11 +193,11 @@
   transition: background-color 0.2s;
 
   &:hover:not(.emptyDay) {
-    background: #f9fafb;
+    background: #ECEBF7;
   }
 
   &.emptyDay {
-    background: #f9fafb;
+    background: #ECEBF7;
     cursor: default;
   }
 
