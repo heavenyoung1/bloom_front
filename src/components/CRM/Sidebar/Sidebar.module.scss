@@ -122,15 +122,10 @@
 
 .navHeader {
   margin-bottom: 30px;
-  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
   overflow: hidden;
-
-  h2 {
-    font-size: 18px;
-    font-weight: 600;
-    color: #1f2937;
-    margin: 0;
-  }
 }
 
 .nav {

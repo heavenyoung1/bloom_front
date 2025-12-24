@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, ReactNode } from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../../contexts/AuthContext';
 import styles from './Sidebar.module.scss';
+import CaseOneLogo from './CaseOneLogo';
 import {
   FiBarChart2,
   FiBriefcase,
@@ -113,7 +114,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isCollapsed = false, onToggle }) => {
       {/* Белая панель с навигацией */}
       <div className={`${styles.navPanel} ${isCollapsed ? styles.collapsed : ''}`}>
         <div className={styles.navHeader}>
-          <h2>Dashboard v.01</h2>
+          <CaseOneLogo />
         </div>
 
         <nav className={styles.nav}>
