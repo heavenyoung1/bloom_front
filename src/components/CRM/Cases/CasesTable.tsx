@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FiSearch } from 'react-icons/fi';
 import { casesApi, documentsApi, eventsApi } from '../../../services/api';
 import type { Case } from '../../../services/api';
 import { getStatusColor } from '../../../types/caseStatus';
@@ -150,7 +151,7 @@ const CasesTable: React.FC = () => {
         </div>
         <div className={styles.controls}>
           <div className={styles.search}>
-            <span className={styles.searchIcon}>🔍</span>
+            <span className={styles.searchIcon}><FiSearch /></span>
             <input
               type="text"
               placeholder="Поиск"

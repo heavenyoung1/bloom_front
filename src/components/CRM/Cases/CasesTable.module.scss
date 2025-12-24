@@ -51,7 +51,15 @@
 
 .searchIcon {
   font-size: 16px;
-  color: #9ca3af;
+  color: #6F88FC;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 }
 
 .searchInput {

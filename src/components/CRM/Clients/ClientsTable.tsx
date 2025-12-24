@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FiSearch } from 'react-icons/fi';
 import { clientsApi } from '../../../services/api';
 import type { Client } from '../../../services/api';
 import CreateClientForm from './CreateClientForm';
@@ -82,7 +83,7 @@ const ClientsTable: React.FC = () => {
         </div>
         <div className={styles.controls}>
           <div className={styles.search}>
-            <span className={styles.searchIcon}>🔍</span>
+            <span className={styles.searchIcon}><FiSearch /></span>
             <input
               type="text"
               placeholder="Поиск"

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { FiSearch } from 'react-icons/fi';
 import { contactsApi, casesApi } from '../../../services/api';
 import type { Contact, Case } from '../../../services/api';
 import CreateContactForm from './CreateContactForm';
@@ -85,7 +86,7 @@ const ContactsTable: React.FC = () => {
         </div>
         <div className={styles.controls}>
           <div className={styles.search}>
-            <span className={styles.searchIcon}>🔍</span>
+            <span className={styles.searchIcon}><FiSearch /></span>
             <input
               type="text"
               placeholder="Поиск"
