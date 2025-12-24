@@ -1,10 +1,10 @@
-import React from 'react';
+import React, { ReactNode } from 'react';
 import styles from './MetricCard.module.scss';
 
 interface MetricCardProps {
   title: string;
   value: string | number;
-  icon: string;
+  icon: ReactNode;
   change?: {
     value: string;
     isPositive: boolean;

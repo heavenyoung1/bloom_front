@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { eventsApi } from '../../../services/api';
 import type { Event } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
+import { FiCalendar } from 'react-icons/fi';
 import styles from './NearestEvents.module.scss';
 
 const NearestEvents: React.FC = () => {
@@ -69,7 +70,7 @@ const NearestEvents: React.FC = () => {
   return (
     <div className={styles.card}>
       <div className={styles.header}>
-        <div className={styles.icon}>📅</div>
+        <div className={styles.icon}><FiCalendar /></div>
         <div className={styles.content}>
           <h3 className={styles.title}>Ближайшие события</h3>
           {loading ? (

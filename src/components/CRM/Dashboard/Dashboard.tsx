@@ -4,6 +4,7 @@ import DashboardHeader from '../DashboardHeader/DashboardHeader';
 import MetricCard from '../MetricCard/MetricCard';
 import NearestEvents from './NearestEvents';
 import CustomersTable from '../CustomersTable/CustomersTable';
+import { FiBriefcase, FiClock } from 'react-icons/fi';
 import styles from './Dashboard.module.scss';
 
 const Dashboard: React.FC = () => {
@@ -28,16 +29,14 @@ const Dashboard: React.FC = () => {
         
         <div className={styles.metrics}>
           <MetricCard
-            title="Total Customers"
-            value="5,423"
-            icon="👥"
-            change={{ value: '16% this month', isPositive: true }}
+            title="Активные дела"
+            value="—"
+            icon={<FiBriefcase />}
           />
           <MetricCard
-            title="Members"
-            value="1,893"
-            icon="👤"
-            change={{ value: '1% this month', isPositive: false }}
+            title="Платежей в ожидании"
+            value="—"
+            icon={<FiClock />}
           />
           <NearestEvents />
         </div>
