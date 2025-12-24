@@ -673,6 +673,7 @@ export interface CreatePaymentDetailRequest {
 
 // Интерфейс для обновления платежной информации
 export interface UpdatePaymentDetailRequest {
+  attorney_id?: number;
   address?: string;
   bank_account?: string;
   bank_recipient?: string;
@@ -687,27 +688,27 @@ export interface UpdatePaymentDetailRequest {
 export const paymentDetailApi = {
   // Создание платежной информации
   async createPaymentDetail(data: CreatePaymentDetailRequest): Promise<PaymentDetail> {
-    return apiClient.request<PaymentDetail>('/payment-detail/create-payment-detail', 'POST', data);
+    return apiClient.request<PaymentDetail>('/create-payment-detail', 'POST', data);
   },
   
   // Получение платежной информации по ID
   async getPaymentDetail(paymentDetailId: number): Promise<PaymentDetail> {
-    return apiClient.request<PaymentDetail>(`/payment-detail/payment-detail/${paymentDetailId}`, 'GET');
+    return apiClient.request<PaymentDetail>(`/payment-detail/${paymentDetailId}`, 'GET');
   },
   
   // Получение платежной информации по ID юриста
   async getPaymentDetailByAttorney(attorneyId: number): Promise<PaymentDetail> {
-    return apiClient.request<PaymentDetail>(`/payment-detail/payment-detail/attorneys/${attorneyId}`, 'GET');
+    return apiClient.request<PaymentDetail>(`/payment-detail/attorneys/${attorneyId}`, 'GET');
   },
   
   // Обновление платежной информации
   async updatePaymentDetail(paymentDetailId: number, data: UpdatePaymentDetailRequest): Promise<PaymentDetail> {
-    return apiClient.request<PaymentDetail>(`/payment-detail/update-payment-detail/${paymentDetailId}`, 'PUT', data);
+    return apiClient.request<PaymentDetail>(`/update-payment-detail/${paymentDetailId}`, 'PUT', data);
   },
   
   // Удаление платежной информации
   async deletePaymentDetail(paymentDetailId: number): Promise<{ success: boolean; message?: string }> {
-    return apiClient.request<{ success: boolean; message?: string }>(`/payment-detail/delete-payment-detail/${paymentDetailId}`, 'DELETE');
+    return apiClient.request<{ success: boolean; message?: string }>(`/delete-payment-detail/${paymentDetailId}`, 'DELETE');
   },
 };
 

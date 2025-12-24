@@ -235,7 +235,10 @@ const Profile: React.FC = () => {
     try {
       if (paymentDetail) {
         // Обновляем существующую платежную информацию
-        const updated = await paymentDetailApi.updatePaymentDetail(paymentDetail.id, paymentDetailFormData);
+        const updated = await paymentDetailApi.updatePaymentDetail(paymentDetail.id, {
+          ...paymentDetailFormData,
+          attorney_id: user.id,
+        });
         setPaymentDetail(updated);
         setIsEditingPaymentDetail(false);
       } else {
