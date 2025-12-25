@@ -1,8 +1,8 @@
 /* Контейнер Header */
 .header {
-  display: flex;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
   align-items: center;
-  justify-content: space-between;
   padding: 0 40px;
   height: 80px;
   background-color: transparent;
@@ -23,7 +23,7 @@
 
 /* Логотип */
 .logo {
-  height: 60px;
+  height: 40px;
   width: auto;
   cursor: pointer;
   transition: opacity 0.2s ease;
@@ -35,6 +35,12 @@
 }
 
 /* Навигация */
+.navbar {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
 .navbar ul {
   display: flex;
   gap: 32px;
@@ -92,6 +98,12 @@
   background-color: #2563eb;
   transform: translateY(-1px);
   box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+/* Контейнер для кнопки CRM */
+.crmContainer {
+  display: flex;
+  justify-content: flex-end;
 }
 
 /* Контейнер для кнопок */
