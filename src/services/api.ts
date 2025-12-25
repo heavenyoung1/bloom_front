@@ -886,4 +886,23 @@ export const contactsApi = {
   },
 };
 
+// Интерфейс для данных дашборда
+export interface DashboardData {
+  case_name: string;
+  client_name: string;
+  client_phone: string;
+  contact_name: string;
+  contact_phone: string;
+  event_name: string;
+  pending_payments_count: number;
+}
+
+// API для работы с дашбордом
+export const dashboardApi = {
+  // Получение данных дашборда
+  async getDashboard(): Promise<DashboardData[]> {
+    return apiClient.request<DashboardData[]>('/dashboard', 'GET');
+  },
+};
+
 export default apiClient;
