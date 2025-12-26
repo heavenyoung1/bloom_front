@@ -36,9 +36,12 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  // Проверяем оба хранилища при инициализации
+  // Проверяем оба хранилища при инициализации (сначала access_token, потом token для обратной совместимости)
   const [token, setToken] = useState<string | null>(() => {
-    return localStorage.getItem('token') || sessionStorage.getItem('token');
+    return localStorage.getItem('access_token') || 
+           sessionStorage.getItem('access_token') ||
+           localStorage.getItem('token') || 
+           sessionStorage.getItem('token');
   });
   const [isLoading, setIsLoading] = useState(true);
 
@@ -138,23 +141,41 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       
       // Очищаем токены из обоих хранилищ перед сохранением нового
       localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       sessionStorage.removeItem('token');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
       
       // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект с токенами
       // Проверяем оба варианта
       if (response.success && response.data) {
         // Стандартный формат с success и data
         setUser(response.data.user);
-        setToken(response.data.token);
-        storage.setItem('token', response.data.token);
+        const accessToken = response.data.token || (response.data as any).access_token;
+        const refreshToken = (response.data as any).refresh_token;
+        
+        setToken(accessToken);
+        storage.setItem('access_token', accessToken);
+        if (refreshToken) {
+          storage.setItem('refresh_token', refreshToken);
+        }
+        // Для обратной совместимости
+        storage.setItem('token', accessToken);
         console.log(`Token saved after login (standard format) to ${rememberMe ? 'localStorage' : 'sessionStorage'}`); // Для отладки
       } else if ((response as any).access_token || (response as any).access || (response as any).token) {
         // Прямой объект с токенами (как возвращает бэкенд)
         const loginData = response as any;
         const accessToken = loginData.access_token || loginData.access || loginData.token;
+        const refreshToken = loginData.refresh_token;
         
         if (accessToken) {
           setToken(accessToken);
+          storage.setItem('access_token', accessToken);
+          if (refreshToken) {
+            storage.setItem('refresh_token', refreshToken);
+          }
+          // Для обратной совместимости
           storage.setItem('token', accessToken);
           console.log(`Token saved after login (token format) to ${rememberMe ? 'localStorage' : 'sessionStorage'}`); // Для отладки
           
@@ -270,7 +291,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } finally {
       // Очищаем токены из обоих хранилищ
       localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
       sessionStorage.removeItem('token');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
       setToken(null);
       setUser(null);
     }
@@ -334,6 +359,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Сохраняем токен и пользователя, если они найдены
       if (tokenToSave) {
         setToken(tokenToSave);
+        const refreshToken = responseData.refresh_token || responseData.data?.refresh_token;
+        localStorage.setItem('access_token', tokenToSave);
+        if (refreshToken) {
+          localStorage.setItem('refresh_token', refreshToken);
+        }
+        // Для обратной совместимости
         localStorage.setItem('token', tokenToSave);
         console.log('Token saved after verification'); // Для отладки
       } else {

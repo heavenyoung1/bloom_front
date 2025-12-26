@@ -77,6 +77,16 @@ export interface ResendCodeResponse {
   message?: string;
 }
 
+export interface RefreshTokenRequest {
+  refresh_token: string;
+}
+
+export interface RefreshTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  token_type?: string;
+}
+
 export interface Client {
   id: number;
   name: string;
@@ -106,10 +116,91 @@ export interface Case {
   updated_at: string;
 }
 
-// Вспомогательная функция для получения токена из обоих хранилищ
+// Вспомогательные функции для работы с токенами
 const getToken = (): string | null => {
   // Сначала проверяем localStorage, потом sessionStorage
-  return localStorage.getItem('token') || sessionStorage.getItem('token');
+  return localStorage.getItem('access_token') || 
+         sessionStorage.getItem('access_token') ||
+         localStorage.getItem('token') || 
+         sessionStorage.getItem('token');
+};
+
+const getRefreshToken = (): string | null => {
+  return localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
+};
+
+const setTokens = (accessToken: string, refreshToken?: string, rememberMe: boolean = false): void => {
+  const storage = rememberMe ? localStorage : sessionStorage;
+  // Сохраняем новые токены
+  storage.setItem('access_token', accessToken);
+  if (refreshToken) {
+    storage.setItem('refresh_token', refreshToken);
+  }
+  // Удаляем старые токены для обратной совместимости
+  storage.removeItem('token');
+};
+
+const clearTokens = (): void => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('token');
+  sessionStorage.removeItem('access_token');
+  sessionStorage.removeItem('refresh_token');
+  sessionStorage.removeItem('token');
+};
+
+// Флаг для предотвращения множественных одновременных запросов на обновление токена
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+// Функция для обновления токена
+const refreshAccessToken = async (): Promise<string | null> => {
+  // Если уже идет обновление, возвращаем существующий промис
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        clearTokens();
+        return null;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (!response.ok) {
+        clearTokens();
+        return null;
+      }
+
+      const data: RefreshTokenResponse = await response.json();
+      
+      // Сохраняем новые токены
+      const rememberMe = !!localStorage.getItem('refresh_token');
+      setTokens(data.access_token, data.refresh_token || refreshToken, rememberMe);
+      
+      return data.access_token;
+    } catch (error) {
+      console.error('Ошибка обновления токена:', error);
+      clearTokens();
+      return null;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
 };
 
 // Базовый HTTP клиент
@@ -118,7 +209,8 @@ const apiClient = {
     endpoint: string,
     method: string = 'GET',
     data?: any,
-    headers: Record<string, string> = {}
+    headers: Record<string, string> = {},
+    retry: boolean = true
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
@@ -147,9 +239,64 @@ const apiClient = {
     try {
       const response = await fetch(url, config);
       
-      // Проверяем, есть ли тело ответа перед парсингом JSON
-      let responseData: any;
+      // Если получили 401 и это не запрос на обновление токена, пытаемся обновить токен
+      if (response.status === 401 && retry && endpoint !== '/auth/refresh') {
+        const newToken = await refreshAccessToken();
+        
+        if (newToken) {
+          // Повторяем запрос с новым токеном
+          authHeaders['Authorization'] = `Bearer ${newToken}`;
+          config.headers = {
+            'Content-Type': 'application/json',
+            ...authHeaders,
+            ...headers,
+          };
+          
+          const retryResponse = await fetch(url, config);
+          
+          if (!retryResponse.ok) {
+            // Если после обновления токена все еще ошибка, пробрасываем дальше
+            const contentType = retryResponse.headers.get('content-type');
+            let responseData: any;
+            
+            if (contentType && contentType.includes('application/json')) {
+              responseData = await retryResponse.json();
+            } else {
+              const text = await retryResponse.text();
+              responseData = { message: text || 'Ошибка сервера' };
+            }
+            
+            throw {
+              message: responseData.message || responseData.detail || 'Ошибка авторизации',
+              status: retryResponse.status,
+              errors: responseData.errors || responseData.detail,
+            } as ApiError;
+          }
+          
+          // Парсим успешный ответ
+          const contentType = retryResponse.headers.get('content-type');
+          let responseData: any;
+          
+          if (contentType && contentType.includes('application/json')) {
+            responseData = await retryResponse.json();
+          } else {
+            const text = await retryResponse.text();
+            responseData = { message: text || 'Успешно' };
+          }
+          
+          return responseData as T;
+        } else {
+          // Если не удалось обновить токен, пробрасываем ошибку
+          throw {
+            message: 'Сессия истекла. Пожалуйста, войдите снова.',
+            status: 401,
+          } as ApiError;
+        }
+      }
+      
+      // Парсим ответ
       const contentType = response.headers.get('content-type');
+      let responseData: any;
       
       if (contentType && contentType.includes('application/json')) {
         try {
@@ -313,6 +460,11 @@ export const authApi = {
   // Обновление профиля
   async updateProfile(data: UpdateProfileRequest): Promise<AuthResponse> {
     return apiClient.request<AuthResponse>('/me', 'PATCH', data);
+  },
+
+  // Обновление access token через refresh token
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    return apiClient.request<RefreshTokenResponse>('/auth/refresh', 'POST', { refresh_token: refreshToken }, {}, false);
   },
 };
 
