@@ -18,6 +18,12 @@ const Header: React.FC<HeaderProps> = ({
   const navigate = useNavigate();
   const location = useLocation();
   const isLandingPage = location.pathname === '/' || location.pathname === '/home';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
+  
+  // Не рендерим Header на страницах авторизации
+  if (isAuthPage) {
+    return null;
+  }
   
   const handleLogout = async () => {
     await logout();
@@ -58,13 +64,13 @@ const Header: React.FC<HeaderProps> = ({
       {/* Логотип */}
       <img 
         className={styles.logo} 
-        src="/img/caseone_logo.svg" 
-        alt="CaseOne Logo" 
+        src="/img/test_logo.svg" 
+        alt="Logo" 
         onClick={handleLogoClick}
         style={{ cursor: 'pointer' }}
       />
       
-      {/* Навигация по центру */}
+      {/* Навигация */}
       <nav className={styles.navbar}>
         <ul>
           <li><a href="#overview" onClick={(e) => handleNavClick(e, 'overview')}>Обзор</a></li>
@@ -73,18 +79,16 @@ const Header: React.FC<HeaderProps> = ({
           <li><a href="#forwhom" onClick={(e) => handleNavClick(e, 'forwhom')}>Для кого</a></li>
           <li><a href="#about" onClick={(e) => handleNavClick(e, 'about')}>О нас</a></li>
           <li><a href="#contacts" onClick={(e) => handleNavClick(e, 'contacts')}>Контакты</a></li>
+          <li>
+            <button 
+              className={styles.crmButton}
+              onClick={handleCRMClick}
+            >
+              CRM
+            </button>
+          </li>
         </ul>
       </nav>
-      
-      {/* Кнопка CRM справа */}
-      <div className={styles.crmContainer}>
-        <button 
-          className={styles.crmButton}
-          onClick={handleCRMClick}
-        >
-          CRM
-        </button>
-      </div>
       
       {/* Кнопки авторизации - только не на лендинге */}
       {!isLandingPage && (

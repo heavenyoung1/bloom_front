@@ -13,7 +13,7 @@
   --color-border: #e5e7eb;
 
   color: var(--color-text);
-  background-color: var(--color-background);
+  /* background-color убран из :root, так как фон задан в body */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
