@@ -23,12 +23,21 @@ const LoginForm: React.FC = () => {
   const { login, isLoading: authLoading, isAuthenticated } = useAuth();
   const navigate = useNavigate();
 
+  // Загружаем сохраненные данные при инициализации
+  const loadSavedCredentials = (): LoginFormData => {
+    const savedEmail = localStorage.getItem('remembered_email');
+    const savedPassword = localStorage.getItem('remembered_password');
+    const savedRememberMe = localStorage.getItem('remember_me') === 'true';
+    
+    return {
+      email: savedEmail || '',
+      password: savedPassword || '',
+      rememberMe: savedRememberMe,
+    };
+  };
+
   // Состояние формы
-  const [formData, setFormData] = useState<LoginFormData>({
-    email: '',
-    password: '',
-    rememberMe: false,
-  });
+  const [formData, setFormData] = useState<LoginFormData>(loadSavedCredentials);
 
   // Состояние ошибок
   const [errors, setErrors] = useState<LoginFormErrors>({});
@@ -40,6 +49,19 @@ const LoginForm: React.FC = () => {
 
   // Комбинированное состояние загрузки
   const isActuallySubmitting = isSubmitting || authLoading;
+
+  // Сохранение/удаление учетных данных в зависимости от rememberMe
+  const saveCredentials = (email: string, password: string, rememberMe: boolean) => {
+    if (rememberMe) {
+      localStorage.setItem('remembered_email', email);
+      localStorage.setItem('remembered_password', password);
+      localStorage.setItem('remember_me', 'true');
+    } else {
+      localStorage.removeItem('remembered_email');
+      localStorage.removeItem('remembered_password');
+      localStorage.removeItem('remember_me');
+    }
+  };
 
   // Отслеживаем изменения isAuthenticated для автоматической навигации
   useEffect(() => {
@@ -59,10 +81,26 @@ const LoginForm: React.FC = () => {
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [name]: type === 'checkbox' ? checked : value
-    }));
+    };
+    
+    setFormData(newFormData);
+    
+    // При изменении rememberMe обновляем сохраненные данные
+    if (name === 'rememberMe') {
+      if (checked) {
+        // Сохраняем текущие email и password
+        saveCredentials(newFormData.email, newFormData.password, true);
+      } else {
+        // Удаляем сохраненные данные
+        saveCredentials('', '', false);
+      }
+    } else if (newFormData.rememberMe && (name === 'email' || name === 'password')) {
+      // Если rememberMe включен и пользователь меняет email или password, обновляем сохраненные данные
+      saveCredentials(newFormData.email, newFormData.password, true);
+    }
     
     // Очищаем ошибку при изменении поля
     if (errors[name as keyof LoginFormErrors]) {
@@ -106,6 +144,9 @@ const LoginForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
+      // Сохраняем учетные данные перед отправкой
+      saveCredentials(formData.email, formData.password, formData.rememberMe);
+      
       const response = await login(formData.email, formData.password, formData.rememberMe);
       
       // Проверяем успешность входа

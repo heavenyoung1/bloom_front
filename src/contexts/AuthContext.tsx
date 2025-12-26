@@ -296,6 +296,10 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       sessionStorage.removeItem('token');
       sessionStorage.removeItem('access_token');
       sessionStorage.removeItem('refresh_token');
+      // Очищаем сохраненные учетные данные
+      localStorage.removeItem('remembered_email');
+      localStorage.removeItem('remembered_password');
+      localStorage.removeItem('remember_me');
       setToken(null);
       setUser(null);
     }
