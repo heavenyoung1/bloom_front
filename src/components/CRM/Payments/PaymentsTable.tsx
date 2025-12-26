@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch } from 'react-icons/fi';
+import { FiSearch, FiDownload, FiTrash2 } from 'react-icons/fi';
 import { clientPaymentsApi, clientsApi } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { ClientPayment, Client } from '../../../services/api';
@@ -214,18 +214,18 @@ const PaymentsTable: React.FC = () => {
                     <td>
                       <div className={styles.actions}>
                         <button
-                          className={styles.downloadButton}
+                          className={styles.actionButton}
                           onClick={() => handleDownloadPdf(payment.id)}
                           title="Скачать PDF"
                         >
-                          📄
+                          <FiDownload />
                         </button>
                         <button
-                          className={styles.deleteButton}
+                          className={`${styles.actionButton} ${styles.deleteButton}`}
                           onClick={() => handleDelete(payment.id)}
                           title="Удалить"
                         >
-                          🗑️
+                          <FiTrash2 />
                         </button>
                       </div>
                     </td>
