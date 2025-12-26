@@ -106,7 +106,7 @@ const LoginForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await login(formData.email, formData.password);
+      const response = await login(formData.email, formData.password, formData.rememberMe);
       
       // Проверяем успешность входа
       // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект с токенами

@@ -17,6 +17,7 @@ export interface RegisterRequest {
 export interface LoginRequest {
   email: string;
   password: string;
+  remember_me?: boolean;
 }
 
 export interface AuthResponse {
@@ -105,6 +106,12 @@ export interface Case {
   updated_at: string;
 }
 
+// Вспомогательная функция для получения токена из обоих хранилищ
+const getToken = (): string | null => {
+  // Сначала проверяем localStorage, потом sessionStorage
+  return localStorage.getItem('token') || sessionStorage.getItem('token');
+};
+
 // Базовый HTTP клиент
 const apiClient = {
   async request<T>(
@@ -115,8 +122,8 @@ const apiClient = {
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
-    // Получаем токен из localStorage для защищенных запросов
-    const token = localStorage.getItem('token');
+    // Получаем токен из обоих хранилищ для защищенных запросов
+    const token = getToken();
     const authHeaders: Record<string, string> = {};
     
     if (token) {
@@ -551,7 +558,7 @@ export const documentsApi = {
   // Загрузка документа в дело
   async uploadDocument(caseId: number, file: File): Promise<Document> {
     const url = `${API_BASE_URL}/cases/${caseId}/documents`;
-    const token = localStorage.getItem('token');
+    const token = getToken();
     
     const formData = new FormData();
     formData.append('file', file);
@@ -605,7 +612,7 @@ export const documentsApi = {
   // Скачивание документа
   async downloadDocument(documentId: number): Promise<Blob> {
     const url = `${API_BASE_URL}/documents/${documentId}/download`;
-    const token = localStorage.getItem('token');
+    const token = getToken();
     
     const headers: Record<string, string> = {};
     if (token) {
@@ -787,7 +794,7 @@ export const clientPaymentsApi = {
   // Скачивание PDF документа платежа
   async downloadPaymentPdf(paymentId: number): Promise<Blob> {
     const url = `${API_BASE_URL}/download-payment-pdf/${paymentId}`;
-    const token = localStorage.getItem('token');
+    const token = getToken();
     
     const headers: Record<string, string> = {};
     if (token) {

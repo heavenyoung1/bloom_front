@@ -8,7 +8,7 @@ const DashboardHeader: React.FC = () => {
   return (
     <div className={styles.header}>
       <div className={styles.greeting}>
-        <h1>Привет, {user?.first_name || 'User'} 👋</h1>
+        <h1>Привет, {user?.first_name || 'User'} 🖐🏻</h1>
       </div>
     </div>
   );
