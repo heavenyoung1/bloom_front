@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import Header from '../Header/Header';
 import Hero from '../Hero/Hero';
+import Footer from '../Footer';
 import styles from './LandingPage.module.scss';
 import {
   FiBriefcase,
@@ -256,6 +257,8 @@ const LandingPage: React.FC = () => {
           </div>
         </div>
       </section>
+
+      <Footer />
     </div>
   );
 };
