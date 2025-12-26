@@ -1,0 +1,121 @@
+.card {
+  background: white;
+  border-radius: 12px;
+  padding: 29px;
+  transition: transform 0.2s, box-shadow 0.2s;
+
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  }
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  gap: 19px;
+}
+
+.icon {
+  font-size: 29px;
+  width: 58px;
+  height: 58px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f0f4ff;
+  border-radius: 12px;
+  flex-shrink: 0;
+  color: #6F88FC;
+
+  svg {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+.leftSection {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 15px;
+  flex: 1;
+}
+
+.title {
+  font-size: 17px;
+  font-weight: 500;
+  color: #6b7280;
+  margin: 0 0 10px 0;
+}
+
+.legend {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.legendItem {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.legendColor {
+  width: 14px;
+  height: 14px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.legendLabel {
+  color: #4b5563;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.legendCount {
+  color: #1f2937;
+  font-weight: 600;
+}
+
+.totalPayments {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #6b7280;
+  font-weight: 500;
+}
+
+.totalValue {
+  font-size: 18px;
+  font-weight: 700;
+  color: #1f2937;
+}
+
+.rightSection {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.chartContainer {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chart {
+  display: block;
+}
+
+.loading,
+.empty {
+  font-size: 16px;
+  color: #9ca3af;
+  margin-top: 10px;
+}
+
