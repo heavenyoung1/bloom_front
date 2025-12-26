@@ -95,38 +95,47 @@ const PaymentStatusChart: React.FC = () => {
   const chartData = calculateAngles(statusCounts);
   const totalPayments = payments.length;
 
-  // Функция для создания пути сектора
-  const createSectorPath = (
-    startAngle: number,
-    endAngle: number,
-    radius: number,
-    innerRadius: number = 0
-  ): string => {
-    const start = polarToCartesian(radius, startAngle);
-    const end = polarToCartesian(radius, endAngle);
-    const innerStart = polarToCartesian(innerRadius, startAngle);
-    const innerEnd = polarToCartesian(innerRadius, endAngle);
-
-    const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
-
-    return [
-      `M ${start.x} ${start.y}`,
-      `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${end.x} ${end.y}`,
-      `L ${innerEnd.x} ${innerEnd.y}`,
-      `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${innerStart.x} ${innerStart.y}`,
-      'Z',
-    ].join(' ');
-  };
-
-  const polarToCartesian = (radius: number, angleInDegrees: number) => {
+  // Функция для преобразования полярных координат в декартовы
+  const polarToCartesian = (centerX: number, centerY: number, radius: number, angleInDegrees: number) => {
     const angleInRadians = ((angleInDegrees - 90) * Math.PI) / 180.0;
     return {
-      x: radius + radius * Math.cos(angleInRadians),
-      y: radius + radius * Math.sin(angleInRadians),
+      x: centerX + radius * Math.cos(angleInRadians),
+      y: centerY + radius * Math.sin(angleInRadians),
     };
   };
 
-  const radius = 90;
+  // Функция для создания пути сектора кольца
+  const createSectorPath = (
+    startAngle: number,
+    endAngle: number,
+    outerRadius: number,
+    innerRadius: number,
+    centerX: number,
+    centerY: number
+  ): string => {
+    // Точки на внешней окружности
+    const outerStart = polarToCartesian(centerX, centerY, outerRadius, startAngle);
+    const outerEnd = polarToCartesian(centerX, centerY, outerRadius, endAngle);
+    
+    // Точки на внутренней окружности
+    const innerStart = polarToCartesian(centerX, centerY, innerRadius, startAngle);
+    const innerEnd = polarToCartesian(centerX, centerY, innerRadius, endAngle);
+
+    const largeArcFlag = endAngle - startAngle > 180 ? 1 : 0;
+
+    // Строим путь: внешняя дуга -> линия к внутренней -> внутренняя дуга -> замыкание
+    return [
+      `M ${outerStart.x} ${outerStart.y}`, // Начинаем с внешней точки
+      `A ${outerRadius} ${outerRadius} 0 ${largeArcFlag} 1 ${outerEnd.x} ${outerEnd.y}`, // Внешняя дуга
+      `L ${innerEnd.x} ${innerEnd.y}`, // Линия к внутренней точке
+      `A ${innerRadius} ${innerRadius} 0 ${largeArcFlag} 0 ${innerStart.x} ${innerStart.y}`, // Внутренняя дуга (обратно)
+      'Z', // Замыкаем путь
+    ].join(' ');
+  };
+
+  const centerX = 90;
+  const centerY = 90;
+  const outerRadius = 80;
   const innerRadius = 50;
 
   return (
@@ -166,11 +175,11 @@ const PaymentStatusChart: React.FC = () => {
             <div className={styles.empty}>Нет данных</div>
           ) : (
             <div className={styles.chartContainer}>
-              <svg width="180" height="180" className={styles.chart}>
+              <svg width="180" height="180" className={styles.chart} viewBox="0 0 180 180">
                 {chartData.map((item, index) => (
                   <path
                     key={index}
-                    d={createSectorPath(item.startAngle, item.endAngle, radius, innerRadius)}
+                    d={createSectorPath(item.startAngle, item.endAngle, outerRadius, innerRadius, centerX, centerY)}
                     fill={item.color}
                     stroke="white"
                     strokeWidth="2"
