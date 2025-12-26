@@ -144,6 +144,15 @@
 .featureIcon {
   font-size: 48px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6F88FC;
+  
+  svg {
+    width: 48px;
+    height: 48px;
+  }
 }
 
 /* Секция Цены */

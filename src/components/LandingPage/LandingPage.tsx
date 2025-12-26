@@ -3,6 +3,14 @@ import { useLocation } from 'react-router-dom';
 import Header from '../Header/Header';
 import Hero from '../Hero/Hero';
 import styles from './LandingPage.module.scss';
+import {
+  FiBriefcase,
+  FiUsers,
+  FiCalendar,
+  FiCreditCard,
+  FiFileText,
+  FiBarChart2,
+} from 'react-icons/fi';
 
 const LandingPage: React.FC = () => {
   const location = useLocation();
@@ -54,33 +62,45 @@ const LandingPage: React.FC = () => {
           </p>
           <div className={styles.featuresGrid}>
             <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>📋</div>
+              <div className={styles.featureIcon}>
+                <FiBriefcase />
+              </div>
               <h3>Управление делами</h3>
               <p>Не просто список дел, а полный контроль над каждым делом. </p>
             </div>
             <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>👥</div>
+              <div className={styles.featureIcon}>
+                <FiUsers />
+              </div>
               <h3>Клиенты и контакты</h3>
               <p>Вы точно знаете, кому нужно перезвонить, по какому делу и в какие сроки.</p>
             </div>
             <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>📅</div>
+              <div className={styles.featureIcon}>
+                <FiCalendar />
+              </div>
               <h3>Календарь событий</h3>
-              <p>Планируйте встречи, отслеживайте дедлайны и сразу видите ближайшие события.</p>
+              <p>Планируйте встречи, соблюдайте дедлайны и отслеживайте ближайшие события.</p>
             </div>
             <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>💰</div>
+              <div className={styles.featureIcon}>
+                <FiCreditCard />
+              </div>
               <h3>Учёт платежей</h3>
               <p>Выставляйте платежи в один клик — достаточно заполнить данные и создать платёж.</p>
             </div>
             <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>📄</div>
+              <div className={styles.featureIcon}>
+                <FiFileText />
+              </div>
               <h3>Документооборот</h3>
               <p>Все документы собраны в одном месте и привязаны к делам. Найти нужный файл можно за секунды — без поиска по папкам и почте.</p>
             </div>
             <div className={styles.featureCard}>
-              <div className={styles.featureIcon}>🤖</div>
-              <h3>Дашборд с ключевой информациейк</h3>
+              <div className={styles.featureIcon}>
+                <FiBarChart2 />
+              </div>
+              <h3>Дашборд с ключевой информацией</h3>
               <p>Ближайшие события, статистика дел и платежей — всё, что важно именно вам, отображается сразу.</p>
             </div>
           </div>
@@ -113,7 +133,7 @@ const LandingPage: React.FC = () => {
               <div className={styles.badge}>Популярный</div>
               <h3>Профессиональный</h3>
               <div className={styles.price}>
-                <span className={styles.priceAmount}>2990₽</span>
+                <span className={styles.priceAmount}>599₽</span>
                 <span className={styles.pricePeriod}>/месяц</span>
               </div>
               <ul className={styles.pricingFeatures}>
