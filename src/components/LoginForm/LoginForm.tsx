@@ -182,30 +182,88 @@ const LoginForm: React.FC = () => {
         } else {
           setErrors({
             ...errors,
-            submit: 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.'
+            submit: 'Неверный логин или пароль'
           });
         }
       }
       
     } catch (error: any) {
       // Улучшенная обработка ошибок
-      let errorMessage = 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.';
+      let errorMessage = 'Неверный логин или пароль';
       
-      // Обработка CORS ошибок (status 0)
-      if (error.status === 0) {
-        errorMessage = 'Ошибка подключения к серверу. Проверьте настройки CORS на бэкенде. Убедитесь, что бэкенд разрешает запросы с origin http://localhost:5173';
-      } else if (error.status === 401 || error.status === 403) {
-        errorMessage = 'Неверный email или пароль. Проверьте данные и попробуйте еще раз.';
-      } else if (error.status === 400) {
-        errorMessage = 'Неверный формат данных. Проверьте email и пароль.';
-      } else if (error.status === 429) {
-        errorMessage = 'Слишком много попыток входа. Попробуйте позже.';
-      } else if (error.status === 500) {
+      // Сначала проверяем ошибки авторизации (неправильный пароль/логин)
+      if (error.status === 401 || error.status === 403) {
+        errorMessage = 'Неверный логин или пароль';
+      } 
+      // Затем проверяем ошибки валидации - может быть неправильный формат или ошибка авторизации
+      else if (error.status === 400) {
+        // Проверяем, есть ли в сообщении об ошибке информация о неправильном пароле
+        const errorMsg = error.message?.toLowerCase() || '';
+        if (errorMsg.includes('пароль') || errorMsg.includes('password') || 
+            errorMsg.includes('email') || errorMsg.includes('логин') || 
+            errorMsg.includes('login') || errorMsg.includes('invalid') ||
+            errorMsg.includes('неверный') || errorMsg.includes('incorrect')) {
+          errorMessage = 'Неверный логин или пароль';
+        } else {
+          errorMessage = 'Неверный формат данных. Проверьте email и пароль.';
+        }
+      }
+      // Обработка ошибок сервера (500, 502, 503 и т.д.)
+      else if (error.status >= 500) {
         errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
-      } else if (error.message) {
-        // Проверяем на CORS ошибки в сообщении
+      }
+      // Проверяем на CORS/сетевые ошибки (status 0) - может скрывать ошибку авторизации или сервера
+      else if (error.status === 0) {
+        // Проверяем сообщение об ошибке, чтобы понять, что это может быть
+        const errorMsg = error.message?.toLowerCase() || '';
+        
+        // Если в сообщении упоминается неправильный логин/пароль или авторизация
+        if (errorMsg.includes('неверный логин') || errorMsg.includes('неверный пароль') ||
+            errorMsg.includes('неверный email') || errorMsg.includes('неправильный логин') ||
+            errorMsg.includes('неправильный пароль') || errorMsg.includes('unauthorized') ||
+            errorMsg.includes('не авторизован') || errorMsg.includes('401') || 
+            errorMsg.includes('403') || errorMsg.includes('invalid credentials') ||
+            errorMsg.includes('неверные учетные данные') || errorMsg.includes('incorrect')) {
+          errorMessage = 'Неверный логин или пароль';
+        }
+        // Если в сообщении упоминается "возможно, неверный логин или пароль" из api.ts
+        else if (errorMsg.includes('возможно') && (errorMsg.includes('неверный') || errorMsg.includes('логин') || errorMsg.includes('пароль'))) {
+          // Для логина при ошибке подключения/CORS часто это может быть ошибка авторизации
+          // Показываем сообщение, которое предполагает обе возможности
+          errorMessage = 'Неверный логин или пароль. Если проблема сохраняется, проверьте настройки CORS на бэкенде.';
+        }
+        // Если просто CORS ошибка
+        else if (errorMsg.includes('cors')) {
+          // Для логина при CORS часто скрывается ошибка авторизации
+          // Показываем более общее сообщение, которое не исключает ошибку авторизации
+          errorMessage = 'Неверный логин или пароль. Также проверьте настройки CORS на бэкенде.';
+        }
+        // Для остальных случаев сетевых ошибок (Failed to fetch и т.д.)
+        // Для логина предполагаем, что это может быть ошибка авторизации
+        else {
+          // При ошибке подключения во время логина это часто может быть ошибка авторизации
+          // которую скрывает CORS или сетевая ошибка
+          errorMessage = 'Неверный логин или пароль. Если проблема сохраняется, проверьте подключение к серверу и настройки CORS на бэкенде.';
+        }
+      } 
+      else if (error.status === 429) {
+        errorMessage = 'Слишком много попыток входа. Попробуйте позже.';
+      } 
+      else if (error.status === 500) {
+        errorMessage = 'Ошибка на сервере. Попробуйте позже или обратитесь в поддержку.';
+      } 
+      else if (error.message) {
+        // Проверяем на ошибки авторизации в сообщении
         const msg = error.message.toLowerCase();
-        if (msg.includes('cors') || msg.includes('failed to fetch') || msg.includes('networkerror')) {
+        if (msg.includes('unauthorized') || msg.includes('не авторизован') ||
+            msg.includes('401') || msg.includes('403') ||
+            msg.includes('пароль') || msg.includes('password') ||
+            msg.includes('invalid credentials') || msg.includes('неверные учетные данные') ||
+            msg.includes('incorrect') || msg.includes('неверный')) {
+          errorMessage = 'Неверный логин или пароль';
+        }
+        // Проверяем на CORS ошибки в сообщении только если это не ошибка авторизации
+        else if (msg.includes('cors') || msg.includes('failed to fetch') || msg.includes('networkerror')) {
           errorMessage = 'Ошибка подключения к серверу. Проверьте настройки CORS на бэкенде.';
         } else {
           errorMessage = error.message;
