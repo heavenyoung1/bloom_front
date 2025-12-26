@@ -398,14 +398,14 @@ const RegistrationForm: React.FC = () => {
         {/* Номер удостоверения */}
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Номер удостоверения <span className={styles.required}>*</span>
+            Номер в ЕГРА <span className={styles.required}>*</span>
           </label>
           <input
             type="text"
             name="license_id"
             value={formData.license_id}
             onChange={handleInputChange}
-            placeholder="153/3232"
+            placeholder="51/777"
             className={`${styles.input} ${errors.license_id ? styles.inputError : ''}`}
           />
           {errors.license_id && <span className={styles.error}>{errors.license_id}</span>}
@@ -422,7 +422,7 @@ const RegistrationForm: React.FC = () => {
               name="last_name"
               value={formData.last_name}
               onChange={handleInputChange}
-              placeholder="Петров"
+              placeholder="Плевако"
               className={`${styles.input} ${errors.last_name ? styles.inputError : ''}`}
             />
             {errors.last_name && <span className={styles.error}>{errors.last_name}</span>}
@@ -437,7 +437,7 @@ const RegistrationForm: React.FC = () => {
               name="first_name"
               value={formData.first_name}
               onChange={handleInputChange}
-              placeholder="Иван"
+              placeholder="Фёдор"
               className={`${styles.input} ${errors.first_name ? styles.inputError : ''}`}
             />
             {errors.first_name && <span className={styles.error}>{errors.first_name}</span>}
@@ -455,7 +455,7 @@ const RegistrationForm: React.FC = () => {
               name="patronymic"
               value={formData.patronymic}
               onChange={handleInputChange}
-              placeholder="Сергеевич"
+              placeholder="Никифорович"
               className={`${styles.input} ${errors.patronymic ? styles.inputError : ''}`}
             />
             {errors.patronymic && <span className={styles.error}>{errors.patronymic}</span>}
@@ -487,7 +487,7 @@ const RegistrationForm: React.FC = () => {
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            placeholder="ivan@example.com"
+            placeholder="plevako@rambler.ru"
             className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
           />
           {errors.email && <span className={styles.error}>{errors.email}</span>}
@@ -496,14 +496,14 @@ const RegistrationForm: React.FC = () => {
         {/* Telegram */}
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Никнейм Telegram (опционально)
+            Никнейм Telegram
           </label>
           <input
             type="text"
             name="telegram_username"
             value={formData.telegram_username}
             onChange={handleInputChange}
-            placeholder="@username"
+            placeholder="plevako_advokat"
             className={`${styles.input} ${errors.telegram_username ? styles.inputError : ''}`}
           />
           {errors.telegram_username && (
@@ -560,7 +560,7 @@ const RegistrationForm: React.FC = () => {
               name="confirm_password"
               value={formData.confirm_password}
               onChange={handleInputChange}
-              placeholder="Повторите пароль"
+              placeholder="SecurePass123!"
               className={`${styles.input} ${errors.confirm_password ? styles.inputError : ''}`}
             />
             <button

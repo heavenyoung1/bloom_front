@@ -233,7 +233,7 @@ const LoginForm: React.FC = () => {
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            placeholder="ivan@example.com"
+            placeholder="plevako@rambler.ru"
             className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
             autoComplete="username"
           />
