@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { clientPaymentsApi, clientsApi } from '../../../services/api';
 import type { ClientPayment, Client } from '../../../services/api';
+import { FiEdit2, FiCheck, FiX } from 'react-icons/fi';
 import styles from './PaymentDetails.module.scss';
 
 interface PaymentDetailsProps {
@@ -8,11 +9,43 @@ interface PaymentDetailsProps {
   onClose: () => void;
 }
 
+// Маппинг статусов: английский ключ -> русское название
+const statusMap: Record<string, string> = {
+  draft: 'Черновик',
+  issued: 'Выставлен',
+  sent: 'Отправлен',
+  pending: 'Ожидание оплаты',
+  paid: 'Оплачен',
+  partially_paid: 'Частично оплачен',
+  overdue: 'Просрочен',
+  cancelled: 'Отменен',
+  refunded: 'Возвращен',
+  failed: 'Ошибка',
+};
+
+// Обратный маппинг: русское название -> английский ключ
+const statusMapReverse: Record<string, string> = {
+  'Черновик': 'draft',
+  'Выставлен': 'issued',
+  'Отправлен': 'sent',
+  'Ожидание оплаты': 'pending',
+  'Оплачен': 'paid',
+  'Частично оплачен': 'partially_paid',
+  'Просрочен': 'overdue',
+  'Отменен': 'cancelled',
+  'Возвращен': 'refunded',
+  'Ошибка': 'failed',
+};
+
 const PaymentDetails: React.FC<PaymentDetailsProps> = ({ paymentId, onClose }) => {
   const [paymentData, setPaymentData] = useState<ClientPayment | null>(null);
   const [client, setClient] = useState<Client | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isEditingStatus, setIsEditingStatus] = useState(false);
+  const [selectedStatus, setSelectedStatus] = useState<string>('');
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
 
   useEffect(() => {
     loadPaymentData();
@@ -65,7 +98,10 @@ const PaymentDetails: React.FC<PaymentDetailsProps> = ({ paymentId, onClose }) =
   };
 
   const getStatusColor = (status: string) => {
-    switch (status.toLowerCase()) {
+    // Нормализуем статус к русскому формату для сравнения
+    const normalizedStatus = getRussianStatus(status).toLowerCase();
+    
+    switch (normalizedStatus) {
       case 'выставлен':
         return styles.statusIssued;
       case 'оплачен':
@@ -76,8 +112,75 @@ const PaymentDetails: React.FC<PaymentDetailsProps> = ({ paymentId, onClose }) =
         return styles.statusDraft;
       case 'просрочен':
         return styles.statusOverdue;
+      case 'ожидание оплаты':
+        return styles.statusPending;
+      case 'частично оплачен':
+        return styles.statusPartiallyPaid;
+      case 'отменен':
+        return styles.statusCancelled;
+      case 'возвращен':
+        return styles.statusRefunded;
+      case 'ошибка':
+        return styles.statusFailed;
       default:
         return styles.statusDefault;
+    }
+  };
+
+  // Функция для получения русского названия статуса
+  const getRussianStatus = (status: string): string => {
+    // Если статус уже на русском, возвращаем как есть
+    if (statusMapReverse[status]) {
+      return status;
+    }
+    // Если статус на английском, преобразуем в русский
+    return statusMap[status] || status;
+  };
+
+  // Функция для получения английского ключа статуса
+  const getEnglishStatus = (status: string): string => {
+    // Если статус на русском, преобразуем в английский
+    if (statusMapReverse[status]) {
+      return statusMapReverse[status];
+    }
+    // Если статус уже на английском, возвращаем как есть
+    return status;
+  };
+
+  const handleEditStatus = () => {
+    if (!paymentData) return;
+    setIsEditingStatus(true);
+    setSaveError(null);
+    // Преобразуем статус в русский для отображения в селекте
+    setSelectedStatus(getRussianStatus(paymentData.status));
+  };
+
+  const handleCancelEdit = () => {
+    setIsEditingStatus(false);
+    setSelectedStatus('');
+  };
+
+  const handleSaveStatus = async () => {
+    if (!paymentData) return;
+
+    try {
+      setSaving(true);
+      setSaveError(null);
+
+      // API ожидает русские значения статусов
+      const updatedPayment = await clientPaymentsApi.updateClientPayment(paymentId, {
+        status: selectedStatus,
+      });
+
+      // Обновляем локальное состояние с данными с сервера
+      setPaymentData(updatedPayment);
+      setIsEditingStatus(false);
+      setSelectedStatus('');
+    } catch (err: any) {
+      console.error('Ошибка обновления статуса:', err);
+      setSaveError(err.message || 'Не удалось обновить статус');
+    } finally {
+      setSaving(false);
     }
   };
 
@@ -146,9 +249,56 @@ const PaymentDetails: React.FC<PaymentDetailsProps> = ({ paymentId, onClose }) =
 
             <div className={styles.infoRow}>
               <span className={styles.infoLabel}>Статус</span>
-              <span className={`${styles.statusBadge} ${getStatusColor(paymentData.status)}`}>
-                {paymentData.status}
-              </span>
+              <div className={styles.statusContainer}>
+                {isEditingStatus ? (
+                  <div className={styles.statusEditContainer}>
+                    <select
+                      className={styles.statusSelect}
+                      value={selectedStatus}
+                      onChange={(e) => setSelectedStatus(e.target.value)}
+                      disabled={saving}
+                    >
+                      {Object.entries(statusMap).map(([key, value]) => (
+                        <option key={key} value={value}>
+                          {value}
+                        </option>
+                      ))}
+                    </select>
+                    <button
+                      className={styles.saveButton}
+                      onClick={handleSaveStatus}
+                      disabled={saving}
+                      title="Сохранить"
+                    >
+                      <FiCheck />
+                    </button>
+                    <button
+                      className={styles.cancelButton}
+                      onClick={handleCancelEdit}
+                      disabled={saving}
+                      title="Отменить"
+                    >
+                      <FiX />
+                    </button>
+                  </div>
+                ) : (
+                  <div className={styles.statusDisplayContainer}>
+                    <span className={`${styles.statusBadge} ${getStatusColor(paymentData.status)}`}>
+                      {getRussianStatus(paymentData.status)}
+                    </span>
+                    <button
+                      className={styles.editButton}
+                      onClick={handleEditStatus}
+                      title="Редактировать статус"
+                    >
+                      <FiEdit2 />
+                    </button>
+                  </div>
+                )}
+              </div>
+              {saveError && (
+                <span className={styles.saveError}>{saveError}</span>
+              )}
             </div>
 
             <div className={styles.infoRow}>
