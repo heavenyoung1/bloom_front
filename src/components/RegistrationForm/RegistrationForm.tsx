@@ -65,14 +65,63 @@ const RegistrationForm: React.FC = () => {
   const isActuallySubmitting = isSubmitting || authLoading;
 
 
+  // Функция форматирования телефона: +7 999 888 77 88
+  const formatPhoneNumber = (value: string): string => {
+    // Удаляем все символы кроме цифр и +
+    let cleaned = value.replace(/[^\d+]/g, '');
+    
+    // Если не начинается с +7, добавляем +7
+    if (!cleaned.startsWith('+7')) {
+      if (cleaned.startsWith('7')) {
+        cleaned = '+' + cleaned;
+      } else if (cleaned.startsWith('+')) {
+        cleaned = '+7' + cleaned.slice(1);
+      } else {
+        cleaned = '+7' + cleaned;
+      }
+    }
+    
+    // Извлекаем только цифры после +7
+    const digits = cleaned.slice(2).replace(/\D/g, '');
+    
+    // Ограничиваем до 10 цифр (российский номер)
+    const limitedDigits = digits.slice(0, 10);
+    
+    // Форматируем: +7 XXX XXX XX XX
+    let formatted = '+7';
+    if (limitedDigits.length > 0) {
+      formatted += ' ' + limitedDigits.slice(0, 3);
+    }
+    if (limitedDigits.length > 3) {
+      formatted += ' ' + limitedDigits.slice(3, 6);
+    }
+    if (limitedDigits.length > 6) {
+      formatted += ' ' + limitedDigits.slice(6, 8);
+    }
+    if (limitedDigits.length > 8) {
+      formatted += ' ' + limitedDigits.slice(8, 10);
+    }
+    
+    return formatted;
+  };
+
   // Обработчик изменения полей
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    // Специальная обработка для поля телефона
+    if (name === 'phone') {
+      const formatted = formatPhoneNumber(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formatted
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
     
     // Очищаем ошибку при изменении поля
     if (errors[name as keyof FormErrors]) {
@@ -163,7 +212,12 @@ const RegistrationForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await register(formData);
+      // Очищаем номер телефона от пробелов перед отправкой
+      const dataToSend = {
+        ...formData,
+        phone: formData.phone.replace(/\s/g, '')
+      };
+      const response = await register(dataToSend);
       
       console.log('Registration response:', response); // Для отладки
       console.log('Response type:', typeof response); // Для отладки
@@ -344,14 +398,14 @@ const RegistrationForm: React.FC = () => {
         {/* Номер удостоверения */}
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Номер удостоверения <span className={styles.required}>*</span>
+            Номер в ЕГРА <span className={styles.required}>*</span>
           </label>
           <input
             type="text"
             name="license_id"
             value={formData.license_id}
             onChange={handleInputChange}
-            placeholder="153/3232"
+            placeholder="51/777"
             className={`${styles.input} ${errors.license_id ? styles.inputError : ''}`}
           />
           {errors.license_id && <span className={styles.error}>{errors.license_id}</span>}
@@ -368,7 +422,7 @@ const RegistrationForm: React.FC = () => {
               name="last_name"
               value={formData.last_name}
               onChange={handleInputChange}
-              placeholder="Петров"
+              placeholder="Плевако"
               className={`${styles.input} ${errors.last_name ? styles.inputError : ''}`}
             />
             {errors.last_name && <span className={styles.error}>{errors.last_name}</span>}
@@ -383,7 +437,7 @@ const RegistrationForm: React.FC = () => {
               name="first_name"
               value={formData.first_name}
               onChange={handleInputChange}
-              placeholder="Иван"
+              placeholder="Фёдор"
               className={`${styles.input} ${errors.first_name ? styles.inputError : ''}`}
             />
             {errors.first_name && <span className={styles.error}>{errors.first_name}</span>}
@@ -401,7 +455,7 @@ const RegistrationForm: React.FC = () => {
               name="patronymic"
               value={formData.patronymic}
               onChange={handleInputChange}
-              placeholder="Сергеевич"
+              placeholder="Никифорович"
               className={`${styles.input} ${errors.patronymic ? styles.inputError : ''}`}
             />
             {errors.patronymic && <span className={styles.error}>{errors.patronymic}</span>}
@@ -433,7 +487,7 @@ const RegistrationForm: React.FC = () => {
             name="email"
             value={formData.email}
             onChange={handleInputChange}
-            placeholder="ivan@example.com"
+            placeholder="plevako@rambler.ru"
             className={`${styles.input} ${errors.email ? styles.inputError : ''}`}
           />
           {errors.email && <span className={styles.error}>{errors.email}</span>}
@@ -442,14 +496,14 @@ const RegistrationForm: React.FC = () => {
         {/* Telegram */}
         <div className={styles.formGroup}>
           <label className={styles.label}>
-            Никнейм Telegram (опционально)
+            Никнейм Telegram
           </label>
           <input
             type="text"
             name="telegram_username"
             value={formData.telegram_username}
             onChange={handleInputChange}
-            placeholder="@username"
+            placeholder="plevako_advokat"
             className={`${styles.input} ${errors.telegram_username ? styles.inputError : ''}`}
           />
           {errors.telegram_username && (
@@ -506,7 +560,7 @@ const RegistrationForm: React.FC = () => {
               name="confirm_password"
               value={formData.confirm_password}
               onChange={handleInputChange}
-              placeholder="Повторите пароль"
+              placeholder="SecurePass123!"
               className={`${styles.input} ${errors.confirm_password ? styles.inputError : ''}`}
             />
             <button

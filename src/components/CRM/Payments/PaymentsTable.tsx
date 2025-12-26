@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { FiSearch } from 'react-icons/fi';
+import { FiSearch, FiDownload, FiTrash2 } from 'react-icons/fi';
 import { clientPaymentsApi, clientsApi } from '../../../services/api';
 import { useAuth } from '../../../contexts/AuthContext';
 import type { ClientPayment, Client } from '../../../services/api';
 import CreatePaymentForm from './CreatePaymentForm';
+import PaymentDetails from './PaymentDetails';
 import styles from './PaymentsTable.module.scss';
 
 const PaymentsTable: React.FC = () => {
@@ -15,6 +16,7 @@ const PaymentsTable: React.FC = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const [selectedPaymentId, setSelectedPaymentId] = useState<number | null>(null);
   const itemsPerPage = 10;
 
 
@@ -200,7 +202,11 @@ const PaymentsTable: React.FC = () => {
               </thead>
               <tbody>
                 {displayedPayments.map((payment) => (
-                  <tr key={payment.id} className={styles.tableRow}>
+                  <tr 
+                    key={payment.id} 
+                    className={styles.tableRow}
+                    onClick={() => setSelectedPaymentId(payment.id)}
+                  >
                     <td className={styles.nameCell}>{payment.name}</td>
                     <td className={styles.clientCell}>{getClientName(payment.client_id)}</td>
                     <td className={styles.amountCell}>{formatCurrency(payment.paid)}</td>
@@ -212,20 +218,20 @@ const PaymentsTable: React.FC = () => {
                     <td>{formatDate(payment.paid_deadline)}</td>
                     <td>{formatDate(payment.pade_date)}</td>
                     <td>
-                      <div className={styles.actions}>
+                      <div className={styles.actions} onClick={(e) => e.stopPropagation()}>
                         <button
-                          className={styles.downloadButton}
+                          className={styles.actionButton}
                           onClick={() => handleDownloadPdf(payment.id)}
                           title="Скачать PDF"
                         >
-                          📄
+                          <FiDownload />
                         </button>
                         <button
-                          className={styles.deleteButton}
+                          className={`${styles.actionButton} ${styles.deleteButton}`}
                           onClick={() => handleDelete(payment.id)}
                           title="Удалить"
                         >
-                          🗑️
+                          <FiTrash2 />
                         </button>
                       </div>
                     </td>
@@ -266,6 +272,13 @@ const PaymentsTable: React.FC = () => {
             setShowCreateForm(false);
             fetchPayments();
           }}
+        />
+      )}
+
+      {selectedPaymentId !== null && (
+        <PaymentDetails
+          paymentId={selectedPaymentId}
+          onClose={() => setSelectedPaymentId(null)}
         />
       )}
     </div>

@@ -1,10 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import Sidebar from '../Sidebar/Sidebar';
 import DashboardHeader from '../DashboardHeader/DashboardHeader';
-import MetricCard from '../MetricCard/MetricCard';
+import PaymentStatusChart from './PaymentStatusChart';
+import CaseStatusChart from './CaseStatusChart';
 import NearestEvents from './NearestEvents';
 import CustomersTable from '../CustomersTable/CustomersTable';
-import { FiBriefcase, FiClock } from 'react-icons/fi';
 import styles from './Dashboard.module.scss';
 
 const Dashboard: React.FC = () => {
@@ -28,16 +28,8 @@ const Dashboard: React.FC = () => {
         <DashboardHeader />
         
         <div className={styles.metrics}>
-          <MetricCard
-            title="Активные дела"
-            value="—"
-            icon={<FiBriefcase />}
-          />
-          <MetricCard
-            title="Платежей в ожидании"
-            value="—"
-            icon={<FiClock />}
-          />
+          <CaseStatusChart />
+          <PaymentStatusChart />
           <NearestEvents />
         </div>
 

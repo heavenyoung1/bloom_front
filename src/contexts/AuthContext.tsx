@@ -36,7 +36,13 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [token, setToken] = useState<string | null>(localStorage.getItem('token'));
+  // Проверяем оба хранилища при инициализации (сначала access_token, потом token для обратной совместимости)
+  const [token, setToken] = useState<string | null>(() => {
+    return localStorage.getItem('access_token') || 
+           sessionStorage.getItem('access_token') ||
+           localStorage.getItem('token') || 
+           sessionStorage.getItem('token');
+  });
   const [isLoading, setIsLoading] = useState(true);
 
   // Проверяем аутентификацию при загрузке
@@ -54,13 +60,19 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       const response = await authApi.me();
       console.log('checkAuth response:', response); // Для отладки
       
+      // Определяем, в каком хранилище находится текущий токен
+      const localStorageToken = localStorage.getItem('token');
+      const sessionStorageToken = sessionStorage.getItem('token');
+      const currentStorage = localStorageToken ? localStorage : sessionStorage;
+      
       // Обрабатываем разные форматы ответа
       if (response.success && response.data) {
         // Стандартный формат
         setUser(response.data.user);
         if (response.data.token) {
           setToken(response.data.token);
-          localStorage.setItem('token', response.data.token);
+          // Сохраняем токен в то же хранилище, откуда он был загружен
+          currentStorage.setItem('token', response.data.token);
         }
         console.log('User data updated from /me:', response.data.user);
       } else if ((response as any).id || (response as any).email) {
@@ -82,61 +94,90 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         // Токен невалидный - только если пользователь еще не установлен
         // Если пользователь уже установлен, не удаляем его (может быть проблема с эндпоинтом)
         if (!user) {
+          // Удаляем токен из обоих хранилищ
           localStorage.removeItem('token');
+          sessionStorage.removeItem('token');
           setToken(null);
           setUser(null);
         }
       }
     } catch (error: any) {
       console.error('Auth check failed:', error);
-      // Удаляем токен только если это не 404 или если пользователь не установлен
-      // 404 может означать проблему с эндпоинтом, а не с токеном
-      if (error.status !== 404 || !user) {
-        // Не удаляем токен и пользователя, если это временный пользователь
-        // (значит, токен валидный, просто /me не работает как ожидалось)
-        if (!user || user.id !== 0) {
-          localStorage.removeItem('token');
-          setToken(null);
-          setUser(null);
+        // Удаляем токен только если это не 404 или если пользователь не установлен
+        // 404 может означать проблему с эндпоинтом, а не с токеном
+        if (error.status !== 404 || !user) {
+          // Не удаляем токен и пользователя, если это временный пользователь
+          // (значит, токен валидный, просто /me не работает как ожидалось)
+          if (!user || user.id !== 0) {
+            // Удаляем токен из обоих хранилищ
+            localStorage.removeItem('token');
+            sessionStorage.removeItem('token');
+            setToken(null);
+            setUser(null);
+          } else {
+            console.warn('Keeping temporary user despite /me error');
+          }
         } else {
-          console.warn('Keeping temporary user despite /me error');
+          // Если есть пользователь, но /me возвращает 404, возможно проблема с эндпоинтом
+          // Не удаляем пользователя и токен, так как они могут быть валидными
+          console.warn('Auth check returned 404, but user is already set. Possibly endpoint issue.');
         }
-      } else {
-        // Если есть пользователь, но /me возвращает 404, возможно проблема с эндпоинтом
-        // Не удаляем пользователя и токен, так как они могут быть валидными
-        console.warn('Auth check returned 404, but user is already set. Possibly endpoint issue.');
-      }
     } finally {
       setIsLoading(false);
     }
   };
 
   // Вход
-  const login = async (email: string, password: string): Promise<AuthResponse> => {
+  const login = async (email: string, password: string, rememberMe: boolean = false): Promise<AuthResponse> => {
     setIsLoading(true);
     try {
-      console.log('Login started for:', email);
-      const response = await authApi.login({ email, password });
+      console.log('Login started for:', email, 'rememberMe:', rememberMe);
+      const response = await authApi.login({ email, password, remember_me: rememberMe });
       
       console.log('Login response:', response); // Для отладки
+      
+      // Выбираем хранилище в зависимости от rememberMe
+      const storage = rememberMe ? localStorage : sessionStorage;
+      
+      // Очищаем токены из обоих хранилищ перед сохранением нового
+      localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
       
       // Сервер может вернуть либо { success: true, data: {...} }, либо напрямую объект с токенами
       // Проверяем оба варианта
       if (response.success && response.data) {
         // Стандартный формат с success и data
         setUser(response.data.user);
-        setToken(response.data.token);
-        localStorage.setItem('token', response.data.token);
-        console.log('Token saved after login (standard format)'); // Для отладки
+        const accessToken = response.data.token || (response.data as any).access_token;
+        const refreshToken = (response.data as any).refresh_token;
+        
+        setToken(accessToken);
+        storage.setItem('access_token', accessToken);
+        if (refreshToken) {
+          storage.setItem('refresh_token', refreshToken);
+        }
+        // Для обратной совместимости
+        storage.setItem('token', accessToken);
+        console.log(`Token saved after login (standard format) to ${rememberMe ? 'localStorage' : 'sessionStorage'}`); // Для отладки
       } else if ((response as any).access_token || (response as any).access || (response as any).token) {
         // Прямой объект с токенами (как возвращает бэкенд)
         const loginData = response as any;
         const accessToken = loginData.access_token || loginData.access || loginData.token;
+        const refreshToken = loginData.refresh_token;
         
         if (accessToken) {
           setToken(accessToken);
-          localStorage.setItem('token', accessToken);
-          console.log('Token saved after login (token format)'); // Для отладки
+          storage.setItem('access_token', accessToken);
+          if (refreshToken) {
+            storage.setItem('refresh_token', refreshToken);
+          }
+          // Для обратной совместимости
+          storage.setItem('token', accessToken);
+          console.log(`Token saved after login (token format) to ${rememberMe ? 'localStorage' : 'sessionStorage'}`); // Для отладки
           
           let userData: User | null = null;
           
@@ -248,7 +289,17 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Очищаем токены из обоих хранилищ
       localStorage.removeItem('token');
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      sessionStorage.removeItem('token');
+      sessionStorage.removeItem('access_token');
+      sessionStorage.removeItem('refresh_token');
+      // Очищаем сохраненные учетные данные
+      localStorage.removeItem('remembered_email');
+      localStorage.removeItem('remembered_password');
+      localStorage.removeItem('remember_me');
       setToken(null);
       setUser(null);
     }
@@ -312,6 +363,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Сохраняем токен и пользователя, если они найдены
       if (tokenToSave) {
         setToken(tokenToSave);
+        const refreshToken = responseData.refresh_token || responseData.data?.refresh_token;
+        localStorage.setItem('access_token', tokenToSave);
+        if (refreshToken) {
+          localStorage.setItem('refresh_token', refreshToken);
+        }
+        // Для обратной совместимости
         localStorage.setItem('token', tokenToSave);
         console.log('Token saved after verification'); // Для отладки
       } else {

@@ -17,6 +17,7 @@ export interface RegisterRequest {
 export interface LoginRequest {
   email: string;
   password: string;
+  remember_me?: boolean;
 }
 
 export interface AuthResponse {
@@ -76,6 +77,16 @@ export interface ResendCodeResponse {
   message?: string;
 }
 
+export interface RefreshTokenRequest {
+  refresh_token: string;
+}
+
+export interface RefreshTokenResponse {
+  access_token: string;
+  refresh_token?: string;
+  token_type?: string;
+}
+
 export interface Client {
   id: number;
   name: string;
@@ -105,18 +116,106 @@ export interface Case {
   updated_at: string;
 }
 
+// Вспомогательные функции для работы с токенами
+const getToken = (): string | null => {
+  // Сначала проверяем localStorage, потом sessionStorage
+  return localStorage.getItem('access_token') || 
+         sessionStorage.getItem('access_token') ||
+         localStorage.getItem('token') || 
+         sessionStorage.getItem('token');
+};
+
+const getRefreshToken = (): string | null => {
+  return localStorage.getItem('refresh_token') || sessionStorage.getItem('refresh_token');
+};
+
+const setTokens = (accessToken: string, refreshToken?: string, rememberMe: boolean = false): void => {
+  const storage = rememberMe ? localStorage : sessionStorage;
+  // Сохраняем новые токены
+  storage.setItem('access_token', accessToken);
+  if (refreshToken) {
+    storage.setItem('refresh_token', refreshToken);
+  }
+  // Удаляем старые токены для обратной совместимости
+  storage.removeItem('token');
+};
+
+const clearTokens = (): void => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('token');
+  sessionStorage.removeItem('access_token');
+  sessionStorage.removeItem('refresh_token');
+  sessionStorage.removeItem('token');
+};
+
+// Флаг для предотвращения множественных одновременных запросов на обновление токена
+let isRefreshing = false;
+let refreshPromise: Promise<string | null> | null = null;
+
+// Функция для обновления токена
+const refreshAccessToken = async (): Promise<string | null> => {
+  // Если уже идет обновление, возвращаем существующий промис
+  if (isRefreshing && refreshPromise) {
+    return refreshPromise;
+  }
+
+  isRefreshing = true;
+  refreshPromise = (async () => {
+    try {
+      const refreshToken = getRefreshToken();
+      if (!refreshToken) {
+        clearTokens();
+        return null;
+      }
+
+      const response = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        credentials: 'include',
+        body: JSON.stringify({ refresh_token: refreshToken }),
+      });
+
+      if (!response.ok) {
+        clearTokens();
+        return null;
+      }
+
+      const data: RefreshTokenResponse = await response.json();
+      
+      // Сохраняем новые токены
+      const rememberMe = !!localStorage.getItem('refresh_token');
+      setTokens(data.access_token, data.refresh_token || refreshToken, rememberMe);
+      
+      return data.access_token;
+    } catch (error) {
+      console.error('Ошибка обновления токена:', error);
+      clearTokens();
+      return null;
+    } finally {
+      isRefreshing = false;
+      refreshPromise = null;
+    }
+  })();
+
+  return refreshPromise;
+};
+
 // Базовый HTTP клиент
 const apiClient = {
   async request<T>(
     endpoint: string,
     method: string = 'GET',
     data?: any,
-    headers: Record<string, string> = {}
+    headers: Record<string, string> = {},
+    retry: boolean = true
   ): Promise<T> {
     const url = `${API_BASE_URL}${endpoint}`;
     
-    // Получаем токен из localStorage для защищенных запросов
-    const token = localStorage.getItem('token');
+    // Получаем токен из обоих хранилищ для защищенных запросов
+    const token = getToken();
     const authHeaders: Record<string, string> = {};
     
     if (token) {
@@ -140,9 +239,64 @@ const apiClient = {
     try {
       const response = await fetch(url, config);
       
-      // Проверяем, есть ли тело ответа перед парсингом JSON
-      let responseData: any;
+      // Если получили 401 и это не запрос на обновление токена, пытаемся обновить токен
+      if (response.status === 401 && retry && endpoint !== '/auth/refresh') {
+        const newToken = await refreshAccessToken();
+        
+        if (newToken) {
+          // Повторяем запрос с новым токеном
+          authHeaders['Authorization'] = `Bearer ${newToken}`;
+          config.headers = {
+            'Content-Type': 'application/json',
+            ...authHeaders,
+            ...headers,
+          };
+          
+          const retryResponse = await fetch(url, config);
+          
+          if (!retryResponse.ok) {
+            // Если после обновления токена все еще ошибка, пробрасываем дальше
+            const contentType = retryResponse.headers.get('content-type');
+            let responseData: any;
+            
+            if (contentType && contentType.includes('application/json')) {
+              responseData = await retryResponse.json();
+            } else {
+              const text = await retryResponse.text();
+              responseData = { message: text || 'Ошибка сервера' };
+            }
+            
+            throw {
+              message: responseData.message || responseData.detail || 'Ошибка авторизации',
+              status: retryResponse.status,
+              errors: responseData.errors || responseData.detail,
+            } as ApiError;
+          }
+          
+          // Парсим успешный ответ
+          const contentType = retryResponse.headers.get('content-type');
+          let responseData: any;
+          
+          if (contentType && contentType.includes('application/json')) {
+            responseData = await retryResponse.json();
+          } else {
+            const text = await retryResponse.text();
+            responseData = { message: text || 'Успешно' };
+          }
+          
+          return responseData as T;
+        } else {
+          // Если не удалось обновить токен, пробрасываем ошибку
+          throw {
+            message: 'Сессия истекла. Пожалуйста, войдите снова.',
+            status: 401,
+          } as ApiError;
+        }
+      }
+      
+      // Парсим ответ
       const contentType = response.headers.get('content-type');
+      let responseData: any;
       
       if (contentType && contentType.includes('application/json')) {
         try {
@@ -223,8 +377,9 @@ const apiClient = {
       let errorMessage = 'Ошибка подключения к серверу.';
       let status = 0;
       
-      // Проверяем, является ли это эндпоинтом верификации
+      // Проверяем, является ли это эндпоинтом верификации или логина
       const isVerificationEndpoint = endpoint.includes('verify-email');
+      const isLoginEndpoint = endpoint.includes('/auth/login');
       
       if (error.message) {
         if (error.message.includes('Failed to fetch') || error.message.includes('NetworkError')) {
@@ -232,6 +387,17 @@ const apiClient = {
           if (isVerificationEndpoint) {
             errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
             status = 400; // Устанавливаем статус 400 для неверного кода
+          } 
+          // Для эндпоинта логина при CORS/Failed to fetch - может быть ошибка авторизации или сервера
+          // Устанавливаем специальный статус, чтобы фронтенд мог правильно обработать
+          else if (isLoginEndpoint) {
+            // Для логина при ошибке подключения может быть:
+            // 1. Реальная ошибка подключения/CORS
+            // 2. Ошибка авторизации (401), которую заблокировал CORS
+            // 3. Ошибка сервера (500), которую заблокировал CORS
+            // Устанавливаем статус, который позволит фронтенду показать более общее сообщение
+            errorMessage = 'Ошибка подключения к серверу. Проверьте интернет-соединение и настройки CORS на бэкенде.';
+            status = 0; // Оставляем 0, чтобы фронтенд мог показать соответствующее сообщение
           } else {
             errorMessage = 'Ошибка подключения к серверу. Проверьте интернет-соединение.';
           }
@@ -239,6 +405,11 @@ const apiClient = {
           if (isVerificationEndpoint) {
             errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
             status = 400;
+          } 
+          // Для логина при CORS - может быть ошибка авторизации, скрытая за CORS
+          else if (isLoginEndpoint) {
+            errorMessage = 'Ошибка подключения к серверу. Проверьте настройки CORS на бэкенде. Возможно, неверный логин или пароль.';
+            status = 0;
           } else {
             errorMessage = 'Ошибка подключения к серверу. Обратитесь к администратору.';
           }
@@ -249,6 +420,10 @@ const apiClient = {
         // Для эндпоинта верификации по умолчанию считаем код неверным
         errorMessage = 'Код неверный. Проверьте код и попробуйте еще раз.';
         status = 400;
+      } else if (isLoginEndpoint) {
+        // Для логина при неизвестной ошибке - может быть проблема с авторизацией или подключением
+        errorMessage = 'Ошибка подключения к серверу. Проверьте логин, пароль и настройки CORS на бэкенде.';
+        status = 0;
       }
       
       const apiError: ApiError = {
@@ -306,6 +481,11 @@ export const authApi = {
   // Обновление профиля
   async updateProfile(data: UpdateProfileRequest): Promise<AuthResponse> {
     return apiClient.request<AuthResponse>('/me', 'PATCH', data);
+  },
+
+  // Обновление access token через refresh token
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    return apiClient.request<RefreshTokenResponse>('/auth/refresh', 'POST', { refresh_token: refreshToken }, {}, false);
   },
 };
 
@@ -551,7 +731,7 @@ export const documentsApi = {
   // Загрузка документа в дело
   async uploadDocument(caseId: number, file: File): Promise<Document> {
     const url = `${API_BASE_URL}/cases/${caseId}/documents`;
-    const token = localStorage.getItem('token');
+    const token = getToken();
     
     const formData = new FormData();
     formData.append('file', file);
@@ -605,7 +785,7 @@ export const documentsApi = {
   // Скачивание документа
   async downloadDocument(documentId: number): Promise<Blob> {
     const url = `${API_BASE_URL}/documents/${documentId}/download`;
-    const token = localStorage.getItem('token');
+    const token = getToken();
     
     const headers: Record<string, string> = {};
     if (token) {
@@ -787,7 +967,7 @@ export const clientPaymentsApi = {
   // Скачивание PDF документа платежа
   async downloadPaymentPdf(paymentId: number): Promise<Blob> {
     const url = `${API_BASE_URL}/download-payment-pdf/${paymentId}`;
-    const token = localStorage.getItem('token');
+    const token = getToken();
     
     const headers: Record<string, string> = {};
     if (token) {
@@ -883,6 +1063,25 @@ export const contactsApi = {
   // Удаление контакта
   async deleteContact(contactId: number): Promise<{ success: boolean; message?: string }> {
     return apiClient.request<{ success: boolean; message?: string }>(`/contacts/${contactId}`, 'DELETE');
+  },
+};
+
+// Интерфейс для данных дашборда
+export interface DashboardData {
+  case_name: string;
+  client_name: string;
+  client_phone: string;
+  contact_name: string;
+  contact_phone: string;
+  event_name: string;
+  pending_payments_count: number;
+}
+
+// API для работы с дашбордом
+export const dashboardApi = {
+  // Получение данных дашборда
+  async getDashboard(): Promise<DashboardData[]> {
+    return apiClient.request<DashboardData[]>('/dashboard', 'GET');
   },
 };
 

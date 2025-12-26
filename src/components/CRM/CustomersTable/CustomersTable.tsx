@@ -1,110 +1,79 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FiSearch } from 'react-icons/fi';
+import { dashboardApi } from '../../../services/api';
+import type { DashboardData } from '../../../services/api';
 import styles from './CustomersTable.module.scss';
 
-interface Customer {
-  id: number;
-  name: string;
-  company: string;
-  phone: string;
-  email: string;
-  country: string;
-  status: 'Active' | 'Inactive';
-}
-
-const mockCustomers: Customer[] = [
-  {
-    id: 1,
-    name: 'Jane Cooper',
-    company: 'Microsoft',
-    phone: '(225) 555-0118',
-    email: 'jane@microsoft.com',
-    country: 'United States',
-    status: 'Active',
-  },
-  {
-    id: 2,
-    name: 'Floyd Miles',
-    company: 'Yahoo',
-    phone: '(205) 555-0100',
-    email: 'floyd@yahoo.com',
-    country: 'Kiribati',
-    status: 'Inactive',
-  },
-  {
-    id: 3,
-    name: 'Ronald Richards',
-    company: 'Adobe',
-    phone: '(302) 555-0107',
-    email: 'ronald@adobe.com',
-    country: 'Israel',
-    status: 'Inactive',
-  },
-  {
-    id: 4,
-    name: 'Marvin McKinney',
-    company: 'Tesla',
-    phone: '(252) 555-0126',
-    email: 'marvin@tesla.com',
-    country: 'Iran',
-    status: 'Active',
-  },
-  {
-    id: 5,
-    name: 'Jerome Bell',
-    company: 'Google',
-    phone: '(629) 555-0129',
-    email: 'jerome@google.com',
-    country: 'Réunion',
-    status: 'Active',
-  },
-  {
-    id: 6,
-    name: 'Kathryn Murphy',
-    company: 'Microsoft',
-    phone: '(406) 555-0120',
-    email: 'kathryn@microsoft.com',
-    country: 'Curaçao',
-    status: 'Active',
-  },
-  {
-    id: 7,
-    name: 'Jacob Jones',
-    company: 'Yahoo',
-    phone: '(208) 555-0112',
-    email: 'jacob@yahoo.com',
-    country: 'Brazil',
-    status: 'Active',
-  },
-  {
-    id: 8,
-    name: 'Kristin Watson',
-    company: 'Facebook',
-    phone: '(704) 555-0127',
-    email: 'kristin@facebook.com',
-    country: 'Åland Islands',
-    status: 'Inactive',
-  },
-];
-
 const CustomersTable: React.FC = () => {
+  const [dashboardData, setDashboardData] = useState<DashboardData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [sortBy, setSortBy] = useState('по дате (новейшие)');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
-  const totalEntries = 256000;
 
-  const filteredCustomers = mockCustomers.filter((customer) =>
-    customer.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.company.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchQuery.toLowerCase())
+  useEffect(() => {
+    const fetchDashboardData = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const data = await dashboardApi.getDashboard();
+        setDashboardData(data);
+      } catch (err: any) {
+        console.error('Ошибка загрузки данных дашборда:', err);
+        setError(err.message || 'Ошибка загрузки данных');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, []);
+
+  const filteredData = dashboardData.filter((item) =>
+    item.case_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.client_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.contact_name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+    item.event_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   const startIndex = (currentPage - 1) * itemsPerPage;
   const endIndex = startIndex + itemsPerPage;
-  const displayedCustomers = filteredCustomers.slice(startIndex, endIndex);
+  const displayedData = filteredData.slice(startIndex, endIndex);
 
-  const totalPages = Math.ceil(filteredCustomers.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+  const totalEntries = filteredData.length;
+
+  if (loading) {
+    return (
+      <div className={styles.tableContainer}>
+        <div className={styles.tableHeader}>
+          <div className={styles.titleSection}>
+            <h2 className={styles.title}>Все данные</h2>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', padding: '40px' }}>
+          Загрузка данных...
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className={styles.tableContainer}>
+        <div className={styles.tableHeader}>
+          <div className={styles.titleSection}>
+            <h2 className={styles.title}>Все данные</h2>
+          </div>
+        </div>
+        <div style={{ textAlign: 'center', padding: '40px', color: '#dc2626' }}>
+          Ошибка: {error}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.tableContainer}>
@@ -142,41 +111,43 @@ const CustomersTable: React.FC = () => {
         <table className={styles.table}>
           <thead>
             <tr>
-              <th>Customer Name</th>
-              <th>Company</th>
-              <th>Phone Number</th>
-              <th>Email</th>
-              <th>Country</th>
-              <th>Status</th>
+              <th>Название дела</th>
+              <th>Клиент</th>
+              <th>Телефон клиента</th>
+              <th>Контакт</th>
+              <th>Телефон контакта</th>
+              <th>Событие</th>
+              <th>Платежей в ожидании</th>
             </tr>
           </thead>
           <tbody>
-            {displayedCustomers.map((customer) => (
-              <tr key={customer.id}>
-                <td className={styles.nameCell}>{customer.name}</td>
-                <td>{customer.company}</td>
-                <td>{customer.phone}</td>
-                <td>{customer.email}</td>
-                <td>{customer.country}</td>
-                <td>
-                  <span
-                    className={`${styles.status} ${
-                      customer.status === 'Active' ? styles.active : styles.inactive
-                    }`}
-                  >
-                    {customer.status}
-                  </span>
+            {displayedData.length === 0 ? (
+              <tr>
+                <td colSpan={7} style={{ textAlign: 'center', padding: '40px' }}>
+                  Нет данных для отображения
                 </td>
               </tr>
-            ))}
+            ) : (
+              displayedData.map((item, index) => (
+                <tr key={index}>
+                  <td className={styles.nameCell}>{item.case_name || '—'}</td>
+                  <td>{item.client_name || '—'}</td>
+                  <td>{item.client_phone || '—'}</td>
+                  <td>{item.contact_name || '—'}</td>
+                  <td>{item.contact_phone || '—'}</td>
+                  <td>{item.event_name || '—'}</td>
+                  <td>{item.pending_payments_count ?? '—'}</td>
+                </tr>
+              ))
+            )}
           </tbody>
         </table>
       </div>
 
       <div className={styles.pagination}>
         <div className={styles.paginationInfo}>
-          Showing data {startIndex + 1} to {Math.min(endIndex, filteredCustomers.length)} of{' '}
-          {totalEntries.toLocaleString()} entries
+          Показано {startIndex + 1}–{Math.min(endIndex, filteredData.length)} из{' '}
+          {totalEntries.toLocaleString()} записей
         </div>
         <div className={styles.paginationControls}>
           <button

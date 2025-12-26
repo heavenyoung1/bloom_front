@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import AuthForm from './components/AuthForm/AuthForm';
+import LandingPage from './components/LandingPage/LandingPage';
 import Dashboard from './components/CRM/Dashboard/Dashboard';
 import PlaceholderPage from './components/CRM/PlaceholderPage/PlaceholderPage';
 import Clients from './components/CRM/Clients/Clients';
@@ -20,6 +21,10 @@ function App() {
         <div className="App">
           <Routes>
             {/* Публичные маршруты */}
+            <Route
+              path="/home"
+              element={<LandingPage />}
+            />
             <Route
               path="/login"
               element={
@@ -120,7 +125,7 @@ function App() {
             />
             
             {/* Перенаправление с корня */}
-            <Route path="/" element={<Navigate to="/dashboard" replace />} />
+            <Route path="/" element={<Navigate to="/home" replace />} />
             
             {/* 404 - перенаправляем на логин */}
             <Route path="*" element={<Navigate to="/login" replace />} />

@@ -128,6 +128,7 @@
     tr {
       border-bottom: 1px solid #f3f4f6;
       transition: background 0.2s;
+      cursor: pointer;
 
       &:hover {
         background: #ECEBF7;
@@ -196,19 +197,29 @@
   align-items: center;
 }
 
-.downloadButton,
-.deleteButton {
-  padding: 6px 10px;
+.actionButton {
+  width: 32px;
+  height: 32px;
+  padding: 0;
   border: none;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: all 0.2s;
+  border-radius: 8px;
   background: transparent;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6b7280;
+  transition: all 0.2s;
+  font-size: 16px;
+
+  svg {
+    width: 16px;
+    height: 16px;
+  }
 
   &:hover {
     background: #f3f4f6;
-    transform: scale(1.1);
+    color: #374151;
   }
 
   &:active {
@@ -216,15 +227,10 @@
   }
 }
 
-.downloadButton {
-  &:hover {
-    background: #dbeafe;
-  }
-}
-
 .deleteButton {
   &:hover {
     background: #fee2e2;
+    color: #dc2626;
   }
 }
 
