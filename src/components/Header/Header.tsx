@@ -2,18 +2,11 @@ import React from "react";
 import { useNavigate, useLocation } from 'react-router-dom';
 import styles from './Header.module.scss';
 import { useAuth } from '../../contexts/AuthContext';
+import CaseOneLogo from '../CRM/Sidebar/CaseOneLogo';
 
-interface HeaderProps {
-  onShowHero?: () => void;
-  onShowRegister?: () => void;
-  onShowLogin?: () => void;
-}
+interface HeaderProps {}
 
-const Header: React.FC<HeaderProps> = ({ 
-  onShowHero, 
-  onShowRegister, 
-  onShowLogin 
-}) => {
+const Header: React.FC<HeaderProps> = () => {
   const { user, isAuthenticated, logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -62,13 +55,9 @@ const Header: React.FC<HeaderProps> = ({
     <header className={`${styles.header} ${isLandingPage ? styles.landingHeader : ''}`}>
       
       {/* Логотип */}
-      <img 
-        className={styles.logo} 
-        src="/img/test_logo.svg" 
-        alt="Logo" 
-        onClick={handleLogoClick}
-        style={{ cursor: 'pointer' }}
-      />
+      <div className={styles.logoContainer} onClick={handleLogoClick}>
+        <CaseOneLogo />
+      </div>
       
       {/* Навигация */}
       <nav className={styles.navbar}>
@@ -79,51 +68,52 @@ const Header: React.FC<HeaderProps> = ({
           <li><a href="#forwhom" onClick={(e) => handleNavClick(e, 'forwhom')}>Для кого</a></li>
           <li><a href="#about" onClick={(e) => handleNavClick(e, 'about')}>О нас</a></li>
           <li><a href="#contacts" onClick={(e) => handleNavClick(e, 'contacts')}>Контакты</a></li>
-          <li>
-            <button 
-              className={styles.crmButton}
-              onClick={handleCRMClick}
-            >
-              CRM
-            </button>
-          </li>
         </ul>
       </nav>
-      
-      {/* Кнопки авторизации - только не на лендинге */}
-      {!isLandingPage && (
-        <div className={styles.auth}>
-          {isAuthenticated ? (
-            <>
-              <span className={styles.userGreeting}>
-                Привет, {user?.first_name}!
-              </span>
-              <button 
-                className={`${styles.button} ${styles.signOut}`}
-                onClick={handleLogout}
-              >
-                Выйти
-              </button>
-            </>
-          ) : (
-            <>
-              <button 
-                className={`${styles.button} ${styles.signIn}`}
-                onClick={() => navigate('/login')}
-              >
-                Войти
-              </button>
-              
-              <button 
-                className={`${styles.button} ${styles.signUp}`}
-                onClick={() => navigate('/register')}
-              >
-                Регистрация
-              </button>
-            </>
-          )}
-        </div>
-      )}
+
+      {/* Кнопка CRM / Кнопки авторизации - справа */}
+      <div className={styles.rightContainer}>
+        {isLandingPage ? (
+          <button 
+            className={styles.crmButton}
+            onClick={handleCRMClick}
+          >
+            CRM
+          </button>
+        ) : (
+          <div className={styles.auth}>
+            {isAuthenticated ? (
+              <>
+                <span className={styles.userGreeting}>
+                  Привет, {user?.first_name}!
+                </span>
+                <button 
+                  className={`${styles.button} ${styles.signOut}`}
+                  onClick={handleLogout}
+                >
+                  Выйти
+                </button>
+              </>
+            ) : (
+              <>
+                <button 
+                  className={`${styles.button} ${styles.signIn}`}
+                  onClick={() => navigate('/login')}
+                >
+                  Войти
+                </button>
+                
+                <button 
+                  className={`${styles.button} ${styles.signUp}`}
+                  onClick={() => navigate('/register')}
+                >
+                  Регистрация
+                </button>
+              </>
+            )}
+          </div>
+        )}
+      </div>
     </header>
   );
 };
