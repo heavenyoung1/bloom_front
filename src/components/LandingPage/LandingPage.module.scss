@@ -158,7 +158,7 @@
 /* Секция Цены */
 .pricingGrid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 32px;
   margin-top: 60px;
   max-width: 1000px;
@@ -395,6 +395,15 @@
 .contactIcon {
   font-size: 48px;
   margin-bottom: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #6F88FC;
+  
+  svg {
+    width: 48px;
+    height: 48px;
+  }
 }
 
 /* Адаптивность */

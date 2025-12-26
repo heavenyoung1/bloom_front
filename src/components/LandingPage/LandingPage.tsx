@@ -10,6 +10,9 @@ import {
   FiCreditCard,
   FiFileText,
   FiBarChart2,
+  FiMail,
+  FiPhone,
+  FiMessageCircle,
 } from 'react-icons/fi';
 
 const LandingPage: React.FC = () => {
@@ -116,15 +119,14 @@ const LandingPage: React.FC = () => {
           </p>
           <div className={styles.pricingGrid}>
             <div className={styles.pricingCard}>
-              <h3>Базовый</h3>
+              <h3>Тестовый</h3>
               <div className={styles.price}>
                 <span className={styles.priceAmount}>0₽</span>
                 <span className={styles.pricePeriod}>/месяц</span>
               </div>
               <ul className={styles.pricingFeatures}>
-                <li>До 10 дел</li>
-                <li>До 20 клиентов</li>
-                <li>Базовый календарь</li>
+                <li>Все функции проффесионального тарифа</li>
+                <li>Ограничение - 14 дней</li>
                 <li>Email поддержка</li>
               </ul>
               <button className={styles.pricingButton}>Начать бесплатно</button>
@@ -139,25 +141,11 @@ const LandingPage: React.FC = () => {
               <ul className={styles.pricingFeatures}>
                 <li>Неограниченное количество дел</li>
                 <li>Неограниченное количество клиентов</li>
-                <li>Расширенный календарь</li>
-                <li>AI помощник</li>
+                <li>Полноценный календарь</li>
+                <li>Выставление платежей</li>
                 <li>Приоритетная поддержка</li>
               </ul>
               <button className={styles.pricingButton}>Выбрать план</button>
-            </div>
-            <div className={styles.pricingCard}>
-              <h3>Корпоративный</h3>
-              <div className={styles.price}>
-                <span className={styles.priceAmount}>По запросу</span>
-              </div>
-              <ul className={styles.pricingFeatures}>
-                <li>Всё из Профессионального</li>
-                <li>Многопользовательский доступ</li>
-                <li>Кастомная интеграция</li>
-                <li>Персональный менеджер</li>
-                <li>Обучение команды</li>
-              </ul>
-              <button className={styles.pricingButton}>Связаться с нами</button>
             </div>
           </div>
         </div>
@@ -245,17 +233,23 @@ const LandingPage: React.FC = () => {
           </p>
           <div className={styles.contactsGrid}>
             <div className={styles.contactCard}>
-              <div className={styles.contactIcon}>📧</div>
+              <div className={styles.contactIcon}>
+                <FiMail />
+              </div>
               <h3>Email</h3>
               <p>support@crm-law.ru</p>
             </div>
             <div className={styles.contactCard}>
-              <div className={styles.contactIcon}>📞</div>
+              <div className={styles.contactIcon}>
+                <FiPhone />
+              </div>
               <h3>Телефон</h3>
               <p>+7 (800) 123-45-67</p>
             </div>
             <div className={styles.contactCard}>
-              <div className={styles.contactIcon}>💬</div>
+              <div className={styles.contactIcon}>
+                <FiMessageCircle />
+              </div>
               <h3>Чат поддержки</h3>
               <p>Доступен 24/7</p>
             </div>
