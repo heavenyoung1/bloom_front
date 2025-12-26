@@ -65,14 +65,63 @@ const RegistrationForm: React.FC = () => {
   const isActuallySubmitting = isSubmitting || authLoading;
 
 
+  // Функция форматирования телефона: +7 999 888 77 88
+  const formatPhoneNumber = (value: string): string => {
+    // Удаляем все символы кроме цифр и +
+    let cleaned = value.replace(/[^\d+]/g, '');
+    
+    // Если не начинается с +7, добавляем +7
+    if (!cleaned.startsWith('+7')) {
+      if (cleaned.startsWith('7')) {
+        cleaned = '+' + cleaned;
+      } else if (cleaned.startsWith('+')) {
+        cleaned = '+7' + cleaned.slice(1);
+      } else {
+        cleaned = '+7' + cleaned;
+      }
+    }
+    
+    // Извлекаем только цифры после +7
+    const digits = cleaned.slice(2).replace(/\D/g, '');
+    
+    // Ограничиваем до 10 цифр (российский номер)
+    const limitedDigits = digits.slice(0, 10);
+    
+    // Форматируем: +7 XXX XXX XX XX
+    let formatted = '+7';
+    if (limitedDigits.length > 0) {
+      formatted += ' ' + limitedDigits.slice(0, 3);
+    }
+    if (limitedDigits.length > 3) {
+      formatted += ' ' + limitedDigits.slice(3, 6);
+    }
+    if (limitedDigits.length > 6) {
+      formatted += ' ' + limitedDigits.slice(6, 8);
+    }
+    if (limitedDigits.length > 8) {
+      formatted += ' ' + limitedDigits.slice(8, 10);
+    }
+    
+    return formatted;
+  };
+
   // Обработчик изменения полей
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value, type, checked } = e.target;
     
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    // Специальная обработка для поля телефона
+    if (name === 'phone') {
+      const formatted = formatPhoneNumber(value);
+      setFormData(prev => ({
+        ...prev,
+        [name]: formatted
+      }));
+    } else {
+      setFormData(prev => ({
+        ...prev,
+        [name]: type === 'checkbox' ? checked : value
+      }));
+    }
     
     // Очищаем ошибку при изменении поля
     if (errors[name as keyof FormErrors]) {
@@ -163,7 +212,12 @@ const RegistrationForm: React.FC = () => {
     setIsSubmitting(true);
     
     try {
-      const response = await register(formData);
+      // Очищаем номер телефона от пробелов перед отправкой
+      const dataToSend = {
+        ...formData,
+        phone: formData.phone.replace(/\s/g, '')
+      };
+      const response = await register(dataToSend);
       
       console.log('Registration response:', response); // Для отладки
       console.log('Response type:', typeof response); // Для отладки
