@@ -133,21 +133,19 @@ const PaymentStatusChart: React.FC = () => {
     ].join(' ');
   };
 
-  const centerX = 90;
-  const centerY = 90;
-  const outerRadius = 80;
-  const innerRadius = 50;
+  const centerX = 108;
+  const centerY = 108;
+  const outerRadius = 96; // 80 * 1.2
+  const innerRadius = 60; // 50 * 1.2
 
   return (
     <div className={styles.card}>
       <div className={styles.header}>
+        <div className={styles.icon}>
+          <FiClock />
+        </div>
         <div className={styles.leftSection}>
-          <div className={styles.iconWithTitle}>
-            <div className={styles.icon}>
-              <FiClock />
-            </div>
-            <h3 className={styles.title}>Статистика платежей</h3>
-          </div>
+          <h3 className={styles.title}>Статистика платежей</h3>
           {!loading && totalPayments > 0 && (
             <>
               <div className={styles.legend}>
@@ -175,7 +173,7 @@ const PaymentStatusChart: React.FC = () => {
             <div className={styles.empty}>Нет данных</div>
           ) : (
             <div className={styles.chartContainer}>
-              <svg width="180" height="180" className={styles.chart} viewBox="0 0 180 180">
+              <svg width="216" height="216" className={styles.chart} viewBox="0 0 216 216">
                 {chartData.map((item, index) => (
                   <path
                     key={index}
