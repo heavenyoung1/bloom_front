@@ -90,12 +90,13 @@ const Profile: React.FC = () => {
     try {
       const data = await paymentDetailApi.getPaymentDetailByAttorney(user.id);
       setPaymentDetail(data);
+      // Форматируем данные при загрузке
       setPaymentDetailFormData({
         address: data.address || '',
-        bank_account: data.bank_account || '',
+        bank_account: data.bank_account ? formatBankAccount(data.bank_account) : '',
         bank_recipient: data.bank_recipient || '',
         bik: data.bik || '',
-        correspondent_account: data.correspondent_account || '',
+        correspondent_account: data.correspondent_account ? formatCorrespondentAccount(data.correspondent_account) : '',
         index_address: data.index_address || '',
         inn: data.inn || '',
         kpp: data.kpp || '',
@@ -186,12 +187,89 @@ const Profile: React.FC = () => {
     }
   };
   
+  // Функции форматирования для платежной информации
+  const formatPostalCode = (value: string): string => {
+    // Только цифры, максимум 6
+    const digits = value.replace(/\D/g, '').slice(0, 6);
+    return digits;
+  };
+
+  const formatBankAccount = (value: string): string => {
+    // Только цифры, максимум 20, разделяем по 5 цифр
+    const digits = value.replace(/\D/g, '').slice(0, 20);
+    if (digits.length === 0) return '';
+    
+    // Разделяем на группы по 5 цифр
+    const groups: string[] = [];
+    for (let i = 0; i < digits.length; i += 5) {
+      groups.push(digits.slice(i, i + 5));
+    }
+    return groups.join(' ');
+  };
+
+  const formatCorrespondentAccount = (value: string): string => {
+    // Только цифры, максимум 20, разделяем по 5 цифр
+    const digits = value.replace(/\D/g, '').slice(0, 20);
+    if (digits.length === 0) return '';
+    
+    // Разделяем на группы по 5 цифр
+    const groups: string[] = [];
+    for (let i = 0; i < digits.length; i += 5) {
+      groups.push(digits.slice(i, i + 5));
+    }
+    return groups.join(' ');
+  };
+
+  const formatINN = (value: string): string => {
+    // Только цифры, максимум 12
+    const digits = value.replace(/\D/g, '').slice(0, 12);
+    return digits;
+  };
+
+  const formatKPP = (value: string): string => {
+    // Только цифры, максимум 9
+    const digits = value.replace(/\D/g, '').slice(0, 9);
+    return digits;
+  };
+
+  const formatBIK = (value: string): string => {
+    // Только цифры, максимум 9
+    const digits = value.replace(/\D/g, '').slice(0, 9);
+    return digits;
+  };
+
   // Обработчики для платежной информации
   const handlePaymentDetailInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
+    let formattedValue = value;
+    
+    // Применяем форматирование в зависимости от поля
+    switch (name) {
+      case 'index_address':
+        formattedValue = formatPostalCode(value);
+        break;
+      case 'bank_account':
+        formattedValue = formatBankAccount(value);
+        break;
+      case 'correspondent_account':
+        formattedValue = formatCorrespondentAccount(value);
+        break;
+      case 'inn':
+        formattedValue = formatINN(value);
+        break;
+      case 'kpp':
+        formattedValue = formatKPP(value);
+        break;
+      case 'bik':
+        formattedValue = formatBIK(value);
+        break;
+      default:
+        formattedValue = value;
+    }
+    
     setPaymentDetailFormData(prev => ({
       ...prev,
-      [name]: value,
+      [name]: formattedValue,
     }));
     setPaymentDetailError(null);
   };
@@ -203,12 +281,13 @@ const Profile: React.FC = () => {
   
   const handleCancelPaymentDetail = () => {
     if (paymentDetail) {
+      // Форматируем данные при восстановлении
       setPaymentDetailFormData({
         address: paymentDetail.address || '',
-        bank_account: paymentDetail.bank_account || '',
+        bank_account: paymentDetail.bank_account ? formatBankAccount(paymentDetail.bank_account) : '',
         bank_recipient: paymentDetail.bank_recipient || '',
         bik: paymentDetail.bik || '',
-        correspondent_account: paymentDetail.correspondent_account || '',
+        correspondent_account: paymentDetail.correspondent_account ? formatCorrespondentAccount(paymentDetail.correspondent_account) : '',
         index_address: paymentDetail.index_address || '',
         inn: paymentDetail.inn || '',
         kpp: paymentDetail.kpp || '',
@@ -236,18 +315,47 @@ const Profile: React.FC = () => {
     setPaymentDetailError(null);
     
     try {
+      // Убираем пробелы из форматированных полей перед отправкой
+      const dataToSend: CreatePaymentDetailRequest | UpdatePaymentDetailRequest = {
+        ...paymentDetailFormData,
+        bank_account: paymentDetailFormData.bank_account?.replace(/\s/g, ''),
+        correspondent_account: paymentDetailFormData.correspondent_account?.replace(/\s/g, ''),
+      };
+      
       if (paymentDetail) {
         // Обновляем существующую платежную информацию
         const updated = await paymentDetailApi.updatePaymentDetail(paymentDetail.id, {
-          ...paymentDetailFormData,
+          ...dataToSend,
           attorney_id: user.id,
         });
         setPaymentDetail(updated);
+        // Обновляем форму с данными с сервера (они могут быть без форматирования)
+        setPaymentDetailFormData({
+          address: updated.address || '',
+          bank_account: updated.bank_account ? formatBankAccount(updated.bank_account) : '',
+          bank_recipient: updated.bank_recipient || '',
+          bik: updated.bik || '',
+          correspondent_account: updated.correspondent_account ? formatCorrespondentAccount(updated.correspondent_account) : '',
+          index_address: updated.index_address || '',
+          inn: updated.inn || '',
+          kpp: updated.kpp || '',
+        });
         setIsEditingPaymentDetail(false);
       } else {
         // Создаем новую платежную информацию
-        const created = await paymentDetailApi.createPaymentDetail(paymentDetailFormData);
+        const created = await paymentDetailApi.createPaymentDetail(dataToSend);
         setPaymentDetail(created);
+        // Обновляем форму с данными с сервера
+        setPaymentDetailFormData({
+          address: created.address || '',
+          bank_account: created.bank_account ? formatBankAccount(created.bank_account) : '',
+          bank_recipient: created.bank_recipient || '',
+          bik: created.bik || '',
+          correspondent_account: created.correspondent_account ? formatCorrespondentAccount(created.correspondent_account) : '',
+          index_address: created.index_address || '',
+          inn: created.inn || '',
+          kpp: created.kpp || '',
+        });
         setIsEditingPaymentDetail(false);
       }
     } catch (err: any) {
@@ -593,6 +701,8 @@ const Profile: React.FC = () => {
                       className={styles.input}
                       disabled={isSavingPaymentDetail}
                       placeholder="241099"
+                      maxLength={6}
+                      inputMode="numeric"
                     />
                   </label>
                 </div>
@@ -606,7 +716,7 @@ const Profile: React.FC = () => {
                       onChange={handlePaymentDetailInputChange}
                       className={styles.input}
                       disabled={isSavingPaymentDetail}
-                      placeholder='ПАО "Z - банк", лудший банк, филиал в Мухосранске'
+                      placeholder="ПАО T-Банк, филиал в городе Брянске"
                     />
                   </label>
                 </div>
@@ -620,7 +730,9 @@ const Profile: React.FC = () => {
                       onChange={handlePaymentDetailInputChange}
                       className={styles.input}
                       disabled={isSavingPaymentDetail}
-                      placeholder="12345678912345678921"
+                      placeholder="12345 12345 12345 12345"
+                      maxLength={23}
+                      inputMode="numeric"
                     />
                   </label>
                 </div>
@@ -635,6 +747,8 @@ const Profile: React.FC = () => {
                       className={styles.input}
                       disabled={isSavingPaymentDetail}
                       placeholder="987654319"
+                      maxLength={9}
+                      inputMode="numeric"
                     />
                   </label>
                 </div>
@@ -648,7 +762,9 @@ const Profile: React.FC = () => {
                       onChange={handlePaymentDetailInputChange}
                       className={styles.input}
                       disabled={isSavingPaymentDetail}
-                      placeholder="14680414794257063165"
+                      placeholder="12345 12345 12345 12345"
+                      maxLength={23}
+                      inputMode="numeric"
                     />
                   </label>
                 </div>
@@ -662,7 +778,9 @@ const Profile: React.FC = () => {
                       onChange={handlePaymentDetailInputChange}
                       className={styles.input}
                       disabled={isSavingPaymentDetail}
-                      placeholder="1234567843"
+                      placeholder="123456789012"
+                      maxLength={12}
+                      inputMode="numeric"
                     />
                   </label>
                 </div>
@@ -676,7 +794,9 @@ const Profile: React.FC = () => {
                       onChange={handlePaymentDetailInputChange}
                       className={styles.input}
                       disabled={isSavingPaymentDetail}
-                      placeholder="123456754"
+                      placeholder="123456789"
+                      maxLength={9}
+                      inputMode="numeric"
                     />
                   </label>
                 </div>
