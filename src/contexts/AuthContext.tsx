@@ -317,6 +317,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Проверяем все возможные форматы
       let tokenToSave: string | null = null;
       let userToSave: User | null = null;
+      const responseData = response as any;
       
       if (response.success && response.data) {
         // Стандартный формат с success и data
@@ -324,7 +325,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         userToSave = response.data.user;
       } else {
         // Проверяем различные форматы ответа
-        const responseData = response as any;
         
         // Ищем токен в различных полях
         tokenToSave = responseData.token || 
@@ -363,7 +363,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
       // Сохраняем токен и пользователя, если они найдены
       if (tokenToSave) {
         setToken(tokenToSave);
-        const refreshToken = responseData.refresh_token || responseData.data?.refresh_token;
+        const refreshToken = responseData.refresh_token || responseData.data?.refresh_token || (response.success && response.data ? (response.data as any).refresh_token : null);
         localStorage.setItem('access_token', tokenToSave);
         if (refreshToken) {
           localStorage.setItem('refresh_token', refreshToken);
@@ -380,11 +380,8 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         console.log('User saved after verification:', userToSave); // Для отладки
       }
       
-      // Если не нашли токен или пользователя в стандартном формате, возвращаем ответ как есть
-      // но с установленными данными если они были найдены
-      if (response.success && response.data) {
-        return response;
-      } else if (tokenToSave && userToSave) {
+      // Если нашли токен и пользователя, возвращаем успешный ответ
+      if (tokenToSave && userToSave) {
         return {
           success: true,
           data: {
@@ -395,6 +392,12 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
         } as VerifyEmailResponse;
       }
       
+      // Если ответ в стандартном формате, возвращаем как есть
+      if (response.success && response.data) {
+        return response;
+      }
+      
+      // Если ничего не нашли, возвращаем исходный ответ
       return response;
     } catch (error) {
       console.error('Email verification failed:', error);
