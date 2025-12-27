@@ -122,8 +122,6 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
       newErrors.password = 'Пароль обязателен';
     } else if (resetFormData.password.length < 8) {
       newErrors.password = 'Минимум 8 символов';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(resetFormData.password)) {
-      newErrors.password = 'Должны быть: заглавная, строчная буквы, цифра и спецсимвол';
     }
     
     if (!resetFormData.confirmPassword) {
@@ -415,7 +413,7 @@ const ForgotPasswordForm: React.FC<ForgotPasswordFormProps> = ({
           </div>
           {resetErrors.password && <span className={styles.error}>{resetErrors.password}</span>}
           <div className={styles.passwordHint}>
-            Минимум 8 символов, заглавная и строчная буквы, цифра, спецсимвол
+            Минимум 8 символов
           </div>
         </div>
         

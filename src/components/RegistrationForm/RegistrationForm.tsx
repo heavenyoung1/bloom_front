@@ -181,8 +181,6 @@ const RegistrationForm: React.FC = () => {
       newErrors.password = 'Пароль обязателен';
     } else if (formData.password.length < 8) {
       newErrors.password = 'Минимум 8 символов';
-    } else if (!/(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])/.test(formData.password)) {
-      newErrors.password = 'Должны быть: заглавная, строчная буквы, цифра и спецсимвол';
     }
     
     // Подтверждение пароля
@@ -545,7 +543,7 @@ const RegistrationForm: React.FC = () => {
           </div>
           {errors.password && <span className={styles.error}>{errors.password}</span>}
           <div className={styles.passwordHint}>
-            Минимум 8 символов, заглавная и строчная буквы, цифра, спецсимвол
+            Минимум 8 символов
           </div>
         </div>
         
